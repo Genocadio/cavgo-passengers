@@ -1,103 +1,148 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState, useMemo } from "react"
+import { Bus } from "lucide-react"
+import RouteSearch, { type SearchFilters } from "@/components/route-search"
+import RouteCard from "@/components/route-card"
+import { routes, companies } from "@/lib/data"
+import type { Route } from "@/lib/types"
+import { Badge } from "@/components/ui/badge"
+import HeaderWithAuth from "@/components/header-with-auth"
+import { useLanguage } from "@/lib/language-context"
+import TicketModal from "@/components/ticket-modal"
+import { useTickets } from "@/lib/ticket-storage"
+
+export default function HomePage() {
+  const { t } = useLanguage()
+  const { currentTicket, setCurrentTicket } = useTickets()
+
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
+    origin: "",
+    destination: "",
+    company: "",
+    departedCity: false,
+    rural: false,
+  })
+
+  const filteredRoutes = useMemo(() => {
+    return routes.filter((route: Route) => {
+      const matchesOrigin =
+        !searchFilters.origin ||
+        route.from.toLowerCase().includes(searchFilters.origin.toLowerCase()) ||
+        route.stops.some((stop) => stop.name.toLowerCase().includes(searchFilters.origin.toLowerCase()))
+
+      const matchesDestination =
+        !searchFilters.destination ||
+        route.to.toLowerCase().includes(searchFilters.destination.toLowerCase()) ||
+        route.stops.some((stop) => stop.name.toLowerCase().includes(searchFilters.destination.toLowerCase()))
+
+      const company = companies.find((c) => c.id === route.companyId)
+      const matchesCompany =
+        !searchFilters.company || (company && company.name.toLowerCase().includes(searchFilters.company.toLowerCase()))
+
+      const matchesDepartedCity =
+        !searchFilters.departedCity || (route.routeType === "city" && route.status === "departed")
+
+      const matchesRural = !searchFilters.rural || route.routeType === "provincial"
+
+      return matchesOrigin && matchesDestination && matchesCompany && matchesDepartedCity && matchesRural
+    })
+  }, [searchFilters])
+
+  // Calculate new metrics
+  const uniqueDestinations = useMemo(() => {
+    const destinations = new Set<string>()
+    filteredRoutes.forEach((route) => {
+      destinations.add(route.to)
+      route.stops.forEach((stop) => {
+        if (stop.isMidpoint) {
+          destinations.add(stop.name)
+        }
+      })
+    })
+    return destinations.size
+  }, [filteredRoutes])
+
+  const routesByCompany = useMemo(() => {
+    const companyRoutes = new Map<string, number>()
+    filteredRoutes.forEach((route) => {
+      const company = companies.find((c) => c.id === route.companyId)
+      if (company) {
+        companyRoutes.set(company.name, (companyRoutes.get(company.name) || 0) + 1)
+      }
+    })
+    return Array.from(companyRoutes.entries()).sort((a, b) => b[1] - a[1])
+  }, [filteredRoutes])
+
+  const hasActiveFilters =
+    searchFilters.origin ||
+    searchFilters.destination ||
+    searchFilters.company ||
+    searchFilters.departedCity ||
+    searchFilters.rural
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <HeaderWithAuth />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search Section */}
+        <div className="mb-8">
+          <RouteSearch onSearch={setSearchFilters} />
+        </div>
+
+        {/* Results */}
+        <div className="space-y-6">
+          {filteredRoutes.length === 0 ? (
+            <div className="text-center py-12">
+              <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t("noRoutesFound")}</h3>
+              <p className="text-gray-600 mb-4">{t("tryAdjusting")}</p>
+              {hasActiveFilters && (
+                <div className="text-sm text-muted-foreground">
+                  <p>{t("currentFilters")}</p>
+                  <div className="flex justify-center gap-2 mt-2">
+                    {searchFilters.origin && (
+                      <Badge variant="outline">
+                        {t("from")}: {searchFilters.origin}
+                      </Badge>
+                    )}
+                    {searchFilters.destination && (
+                      <Badge variant="outline">
+                        {t("to")}: {searchFilters.destination}
+                      </Badge>
+                    )}
+                    {searchFilters.company && (
+                      <Badge variant="outline">
+                        {t("transportationCompany")}: {searchFilters.company}
+                      </Badge>
+                    )}
+                    {searchFilters.departedCity && <Badge variant="outline">{t("departedCityRoutes")}</Badge>}
+                    {searchFilters.rural && <Badge variant="outline">{t("ruralRoutes")}</Badge>}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {filteredRoutes.map((route) => (
+                <RouteCard key={route.id} route={route} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* Footer */}
+      <footer className="bg-white border-t mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-gray-600">
+            <p>&copy; 2024 RouteBook. {t("footer")}</p>
+          </div>
+        </div>
       </footer>
+      <TicketModal ticket={currentTicket} isOpen={!!currentTicket} onClose={() => setCurrentTicket(null)} />
     </div>
-  );
+  )
 }
