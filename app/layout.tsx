@@ -10,7 +10,7 @@ import { TicketProvider } from "@/lib/ticket-storage"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "RouteBook - Passenger Booking System",
+  title: "Cavgo - Passenger Booking System",
   description: "Book routes with flexible midpoint options for rural and city travel",
 }
 

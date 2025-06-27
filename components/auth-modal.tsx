@@ -150,13 +150,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
               {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
 
-              <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
+              {/* <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
                 <strong>{t("demoCredentials")}</strong>
                 <br />
                 Email: john@example.com
                 <br />
                 {t("anyPassword")}
-              </div>
+              </div> */}
 
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
