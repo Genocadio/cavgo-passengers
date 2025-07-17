@@ -93,7 +93,7 @@ export default function RouteCard({ trip }: RouteCardProps) {
             </div>
             <div className="flex gap-2">
               {/* Status badge: hide on xs, show on sm+ */}
-              <Badge className={`${getStatusColor(trip.status)} text-white`}>
+              <Badge className={`${getStatusColor(trip.status)} text-white hidden md:inline-flex`}>
                 {trip.status}
               </Badge>
               {/* City/Province badge: hide on xs and sm, show on md+ */}
