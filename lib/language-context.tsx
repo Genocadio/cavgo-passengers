@@ -29,7 +29,7 @@ const translations = {
     companyPlaceholder: "Type company name...",
     selectCompany: "Select company",
     allCompanies: "All companies",
-    departedCityRoutes: "Departed City Routes",
+    departedCityRoutes: "City Routes",
     ruralRoutes: "Provincial Routes",
     searchButton: "Search Routes",
     reset: "Reset",

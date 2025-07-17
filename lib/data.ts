@@ -14,7 +14,7 @@ export const routes: Route[] = [
     stops: [
       {
         name: "Kigali",
-        estimatedArrival: new Date("2024-01-15T08:00:00"),
+        estimatedArrival: "2024-01-15T08:00:00.000Z",
         isMidpoint: false,
         isPassed: true,
         price: 0,
@@ -38,7 +38,7 @@ export const routes: Route[] = [
       remainingTime: "12 min",
       remainingDistance: "18 km",
       lastPassedStop: "Kigali",
-      lastPassedTime: new Date("2024-01-15T08:05:00"),
+      lastPassedTime: "2024-01-15T08:05:00.000Z",
     },
     carplate: "RAB 123A",
   },
@@ -55,7 +55,7 @@ export const routes: Route[] = [
     stops: [
       {
         name: "Kigali",
-        estimatedArrival: new Date("2024-01-15T09:30:00"),
+        estimatedArrival: "2024-01-15T09:30:00.000Z",
         isMidpoint: false,
         isPassed: false,
         price: 0,
@@ -89,7 +89,7 @@ export const routes: Route[] = [
     stops: [
       {
         name: "Kigali",
-        estimatedArrival: new Date("2024-01-15T10:00:00"),
+        estimatedArrival: "2024-01-15T10:00:00.000Z",
         isMidpoint: false,
         isPassed: false,
         price: 0,
@@ -129,7 +129,7 @@ export const routes: Route[] = [
     stops: [
       {
         name: "Musanze",
-        estimatedArrival: new Date("2024-01-15T11:15:00"),
+        estimatedArrival: "2024-01-15T11:15:00.000Z",
         isMidpoint: false,
         isPassed: true,
         price: 0,
@@ -138,7 +138,7 @@ export const routes: Route[] = [
         name: "Gakenke",
         isMidpoint: true,
         isPassed: true,
-        passedTime: new Date("2024-01-15T12:30:00"),
+        passedTime: "2024-01-15T12:30:00.000Z",
         price: 800,
       },
       {
@@ -154,7 +154,7 @@ export const routes: Route[] = [
       remainingTime: "25 min",
       remainingDistance: "32 km",
       lastPassedStop: "Gakenke",
-      lastPassedTime: new Date("2024-01-15T12:30:00"),
+      lastPassedTime: "2024-01-15T12:30:00.000Z",
     },
     carplate: "RAE 321D",
   },
@@ -171,7 +171,7 @@ export const routes: Route[] = [
     stops: [
       {
         name: "Kigali City Center",
-        estimatedArrival: new Date("2024-01-15T12:00:00"),
+        estimatedArrival: "2024-01-15T12:00:00.000Z",
         isMidpoint: false,
         isPassed: false,
         price: 0,
@@ -211,7 +211,7 @@ export const routes: Route[] = [
     stops: [
       {
         name: "Nyabugogo",
-        estimatedArrival: new Date("2024-01-15T14:00:00"),
+        estimatedArrival: new Date("2024-01-15T14:00:00").toISOString(),
         isMidpoint: false,
         isPassed: true,
         price: 0,
@@ -220,7 +220,7 @@ export const routes: Route[] = [
         name: "City Center",
         isMidpoint: true,
         isPassed: true,
-        passedTime: new Date("2024-01-15T14:10:00"),
+        passedTime: new Date("2024-01-15T14:10:00").toISOString(),
         price: 150,
       },
       {
@@ -243,17 +243,17 @@ export const routes: Route[] = [
       remainingTime: "8 min",
       remainingDistance: "5 km",
       lastPassedStop: "City Center",
-      lastPassedTime: new Date("2024-01-15T14:10:00"),
+      lastPassedTime: new Date("2024-01-15T14:10:00").toISOString(),
     },
     carplate: "RAG 987F",
   },
 ]
 
 export const companies = [
-  { id: 1, name: "Express Transport" },
-  { id: 2, name: "Swift Bus" },
-  { id: 3, name: "City Connect" },
-  { id: 4, name: "Rural Link" },
-  { id: 5, name: "Airport Shuttle" },
-  { id: 6, name: "Metro Bus" },
+  { id: 1, name: "Toyota", car_company: "Toyota" },
+  { id: 2, name: "Swift Bus", car_company: "Nissan" },
+  { id: 3, name: "City Connect", car_company: "Hyundai" },
+  { id: 4, name: "Rural Link", car_company: "Mitsubishi" },
+  { id: 5, name: "Airport Shuttle", car_company: "Kia" },
+  { id: 6, name: "Metro Bus", car_company: "Isuzu" },
 ]

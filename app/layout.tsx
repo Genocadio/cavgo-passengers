@@ -6,6 +6,7 @@ import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
 import { LanguageProvider } from "@/lib/language-context"
 import { TicketProvider } from "@/lib/ticket-storage"
+import ReactQueryProvider from "./react-query-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,14 +23,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <LanguageProvider>
-          <AuthProvider>
-            <TicketProvider>
-              {children}
-              <Toaster position="top-center" expand={true} richColors />
-            </TicketProvider>
-          </AuthProvider>
-        </LanguageProvider>
+        <ReactQueryProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <TicketProvider>
+                {children}
+                <Toaster position="top-center" expand={true} richColors />
+              </TicketProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   )

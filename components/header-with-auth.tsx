@@ -18,7 +18,7 @@ export default function HeaderWithAuth() {
 
   return (
     <>
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">

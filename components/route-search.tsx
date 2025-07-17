@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useId } from "react"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,8 @@ export interface SearchFilters {
   origin: string
   destination: string
   company: string
+  city_route: boolean
   departedCity: boolean
-  rural: boolean
 }
 
 export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFilters) => void }) {
@@ -25,13 +25,14 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
   const [destination, setDestination] = useState("")
   const [company, setCompany] = useState("")
   const [departedCity, setDepartedCity] = useState(false)
-  const [rural, setRural] = useState(false)
+  const [cityRoute, setCityRoute] = useState(false)
   const [companyInput, setCompanyInput] = useState("")
+  const downshiftId = useId()
 
   // Automatically trigger search on any filter change
   useEffect(() => {
-    onSearch({ origin, destination, company, departedCity, rural })
-  }, [origin, destination, company, departedCity, rural])
+    onSearch({ origin, destination, company, city_route: cityRoute, departedCity })
+  }, [origin, destination, company, cityRoute, departedCity])
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -58,6 +59,7 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
       {/* Company - Downshift Autocomplete */}
       <div>
         <Downshift<typeof companies[0] | null>
+          id={downshiftId}
           onChange={selection => {
             setCompany(selection && "name" in selection ? selection.name : "")
             setCompanyInput(selection && "name" in selection ? selection.name : "")
@@ -139,7 +141,7 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
             onChange={(e) => {
               const checked = e.target.checked
               setDepartedCity(checked)
-              if (checked) setRural(false)
+              if (checked) setCityRoute(false)
             }}
             className="h-5 w-5"
           />
@@ -149,10 +151,10 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            checked={rural}
+            checked={cityRoute}
             onChange={(e) => {
               const checked = e.target.checked
-              setRural(checked)
+              setCityRoute(checked)
               if (checked) setDepartedCity(false)
             }}
             className="h-5 w-5"

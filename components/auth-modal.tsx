@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
+import { toast } from "sonner"
 
 interface AuthModalProps {
   isOpen: boolean
@@ -21,25 +22,36 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { t } = useLanguage()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [phone, setPhone] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState("signin")
-  const { login, isLoading } = useAuth()
+  const { login, register, isLoading } = useAuth()
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    const success = await login(email, password)
-    if (success) {
-      onClose()
-      resetForm()
-    } else {
-      setError(t("invalidCredentials"))
+    try {
+      const success = await login(email, password)
+      if (success) {
+        onClose()
+        resetForm()
+      } else {
+        toast.error("Invalid credentials. Please check your email/phone and password.")
+      }
+    } catch (err: any) {
+      if (err?.code === "SERVICE_UNAVAILABLE") {
+        toast.error("Service not available for now, try again later.")
+      } else if (err?.message?.includes("NetworkError") || err?.message?.includes("Failed to fetch")) {
+        toast.error("Connection refused. Please check your network or try again later.")
+      } else {
+        toast.error("An unexpected error occurred. Please try again.")
+      }
     }
   }
 
@@ -48,32 +60,45 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setError("")
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match")
+      toast.error("Passwords do not match")
       return
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters")
+      toast.error("Password must be at least 6 characters")
       return
     }
 
-    // Simulate registration API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Auto sign in after registration
-    const success = await login(email, password)
-    if (success) {
-      onClose()
-      resetForm()
-    } else {
-      setError("Registration failed. Please try again.")
+    try {
+      const success = await register({
+        firstName,
+        lastName,
+        email,
+        phone,
+        password,
+      })
+      if (success) {
+        onClose()
+        resetForm()
+      } else {
+        toast.error("Registration failed. Please check your details or try again.")
+      }
+    } catch (err: any) {
+      if (err?.code === "SERVICE_UNAVAILABLE") {
+        toast.error("Service not available for now, try again later.")
+      } else if (err?.message?.includes("NetworkError") || err?.message?.includes("Failed to fetch")) {
+        toast.error("Connection refused. Please check your network or try again later.")
+      } else {
+        toast.error("An unexpected error occurred. Please try again.")
+      }
     }
   }
 
   const resetForm = () => {
     setEmail("")
     setPassword("")
-    setName("")
+    setFirstName("")
+    setLastName("")
     setPhone("")
     setConfirmPassword("")
     setError("")
@@ -110,15 +135,15 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <TabsContent value="signin">
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signin-email">{t("email")}</Label>
+                <Label htmlFor="signin-emailOrPhone">Email or Phone</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="signin-email"
-                    type="email"
+                    id="signin-emailOrPhone"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your.email@example.com"
+                    placeholder="your.email@example.com or +2507xxxxxxx"
                     className="pl-10"
                     required
                   />
@@ -148,16 +173,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </div>
               </div>
 
-              {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
-
-              {/* <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
-                <strong>{t("demoCredentials")}</strong>
-                <br />
-                Email: john@example.com
-                <br />
-                {t("anyPassword")}
-              </div> */}
-
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
                   {t("cancel")}
@@ -171,19 +186,37 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
           <TabsContent value="register">
             <form onSubmit={handleRegister} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="register-name">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="register-name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="pl-10"
-                    required
-                  />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="register-firstname">First Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="register-firstname"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="First name"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="register-lastname">Last Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="register-lastname"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Last name"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -252,9 +285,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
+                    placeholder="Confirm password"
                     className="pl-10 pr-10"
                     required
+                    minLength={6}
                   />
                   <button
                     type="button"
@@ -265,8 +299,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </button>
                 </div>
               </div>
-
-              {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</div>}
 
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={handleClose} className="flex-1">

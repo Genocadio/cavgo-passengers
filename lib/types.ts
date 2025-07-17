@@ -1,9 +1,12 @@
+import { Trip } from "./features/trips/useTrips"
+
 export interface Stop {
+  id?: number // unique id for mapping
   name: string
-  estimatedArrival?: Date
+  estimatedArrival?: string
   isMidpoint: boolean
   isPassed: boolean
-  passedTime?: Date
+  passedTime?: string
   price: number
   estimatedTime?: string // Add this field for departed routes
 }
@@ -13,7 +16,7 @@ export interface CurrentLocation {
   remainingTime: string
   remainingDistance: string
   lastPassedStop: string
-  lastPassedTime: Date
+  lastPassedTime: string
 }
 
 export interface Route {
@@ -32,9 +35,9 @@ export interface Route {
 }
 
 export interface BookingRequest {
-  routeId: number
-  fromStop: string
-  toStop: string
+  tripId: number
+  fromStopId: string
+  toStopId: string
   seats: number
   passengerName: string
   passengerPhone: string
@@ -47,6 +50,40 @@ export interface User {
   name: string
   email: string
   phone: string
+  accessToken?: string
+  refreshToken?: string
+  userId?: number
+  username?: string
+  userType?: string
+  isCompanyUser?: boolean
+  companyId?: number
+  companyUserRole?: string
+}
+
+export interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  userId: number
+  username: string
+  email: string
+  phone: string
+  userType: string
+  isCompanyUser: boolean
+  companyId?: number
+  companyUserRole?: string
+}
+
+export interface RegisterRequest {
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string
+  password: string
+}
+
+export interface LoginRequest {
+  emailOrPhone: string
+  password: string
 }
 
 export interface Ticket {
@@ -61,8 +98,8 @@ export interface Ticket {
   passengerEmail?: string
   paymentPhone: string
   totalPrice: number
-  bookingDate: Date
+  bookingDate: string
   paymentStatus: "paid" | "pending"
-  route: Route
+  trip: Trip
   carplate: string // Car's plate number
 }
