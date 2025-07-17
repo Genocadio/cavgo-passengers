@@ -106,6 +106,9 @@ export function useUserBookings(userId?: string | null) {
       }
       const data = await response.json();
       // If the API returns { bookings: [...] }, adjust accordingly
+      if (!data || (Array.isArray(data) && data.length === 0) || (data.bookings && data.bookings.length === 0)) {
+        return [];
+      }
       return Array.isArray(data) ? data : data.bookings;
     },
   });

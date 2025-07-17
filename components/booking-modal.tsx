@@ -28,6 +28,7 @@ import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from "@react-
 import QRCode from "react-qr-code"
 import QRCodeGen from "qrcode"
 import { Image } from "@react-pdf/renderer"
+import AuthModal from "@/components/auth-modal"
 
 
 interface BookingModalProps {
@@ -41,6 +42,18 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
   const { user } = useAuth()
   const { t } = useLanguage()
   const { addTicket, setCurrentTicket } = useTickets()
+
+  // Add state to control AuthModal visibility
+  const [showAuthModal, setShowAuthModal] = useState(false)
+
+  // Show AuthModal if not logged in and booking modal is open
+  useEffect(() => {
+    if (isOpen && !user) {
+      setShowAuthModal(true)
+    } else {
+      setShowAuthModal(false)
+    }
+  }, [isOpen, user])
 
   const [booking, setBooking] = useState<Partial<BookingRequest>>({
     tripId: trip.id,
@@ -505,364 +518,373 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{t("bookYourJourney")}</DialogTitle>
-        </DialogHeader>
+    <>
+      {/* Show AuthModal if user is not logged in */}
+      {showAuthModal && (
+        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      )}
+      {/* Only show booking form if user is logged in and modal is open */}
+      {isOpen && user && (
+        <Dialog open={isOpen} onOpenChange={handleClose}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t("bookYourJourney")}</DialogTitle>
+            </DialogHeader>
 
-        {!isBookingPossible ? (
-          <div className="p-6">
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-amber-800">
-                    {!trip.route.city_route
-                      ? t("noProvincialBookingPoints")
-                      : t("noCityBookingPoints")}
-                  </p>
-                  {!trip.route.city_route && trip.status === "IN_PROGRESS" && (
-                    <p className="text-sm text-amber-700 mt-2">
-                      {t("finalDestinationOnly")}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <Button onClick={handleClose} className="w-full mt-4">
-              {t("close")}
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Route Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t("journeyDetails")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2 w-full">
-                    <Label htmlFor="fromStop">{t("from")}</Label>
-                    {trip.route.city_route ? (
-                      <Select
-                        value={booking.fromStopId != null ? booking.fromStopId.toString() : ""}
-                        onValueChange={(value) => setBooking({ ...booking, fromStopId: value, toStopId: undefined })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <span className="truncate">
-                            {booking.fromStopId !== undefined && booking.fromStopId !== null
-                              ? String(cityRouteFromOptions.find((stop) => stop.id.toString() === booking.fromStopId?.toString())?.custom_name || t("selectOrigin"))
-                              : t("selectOrigin")}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cityRouteFromOptions.map((stop) => (
-                            <SelectItem
-                              key={stop.id.toString()}
-                              value={stop.id.toString()}
-                              className="truncate"
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.custom_name}</span>
-                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                                  Available
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Select
-                        value={booking.fromStopId != null ? booking.fromStopId.toString() : ""}
-                        onValueChange={(value) => setBooking({ ...booking, fromStopId: value, toStopId: undefined })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <span className="truncate">
-                            {booking.fromStopId !== undefined && booking.fromStopId !== null
-                              ? String(availableOrigins.find((stop) => stop.location.id.toString() === booking.fromStopId?.toString())?.location.custom_name || t("selectOrigin"))
-                              : t("selectOrigin")}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableOrigins
-                            .filter((stop) => stop.location.id.toString() !== booking.fromStopId?.toString())
-                            .map((stop) => (
-                              <SelectItem key={stop.location.id.toString()} value={stop.location.id.toString()} className="truncate">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.location.custom_name}</span>
-                                  {stop.price > 0 && <span className="text-muted-foreground">({stop.price} RWF)</span>}
-                                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                                    Available
-                                  </Badge>
-                                </div>
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 w-full">
-                    <Label htmlFor="toStop">{t("to")}</Label>
-                    {trip.route.city_route ? (
-                      <Select
-                        value={booking.toStopId != null ? booking.toStopId.toString() : ""}
-                        onValueChange={(value) => setBooking({ ...booking, toStopId: value })}
-                        disabled={!booking.fromStopId}
-                      >
-                        <SelectTrigger className="w-full">
-                          <span className="truncate">
-                            {booking.toStopId !== undefined && booking.toStopId !== null
-                              ? String(cityRouteToOptions.find((stop) => stop.id.toString() === booking.toStopId?.toString())?.custom_name || t("selectDestination"))
-                              : t("selectDestination")}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cityRouteToOptions.map((stop) => (
-                            <SelectItem
-                              key={stop.id.toString()}
-                              value={stop.id.toString()}
-                              className="truncate"
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.custom_name}</span>
-                                <span className="text-muted-foreground">({getSegmentPrice(trip, booking.fromStopId!, stop.id.toString())} RWF)</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Select
-                        value={booking.toStopId != null ? booking.toStopId.toString() : ""}
-                        onValueChange={(value) => setBooking({ ...booking, toStopId: value })}
-                        disabled={!booking.fromStopId}
-                      >
-                        <SelectTrigger className="w-full">
-                          <span className="truncate">
-                            {booking.toStopId !== undefined && booking.toStopId !== null
-                              ? String(availableDestinations.find((stop) => stop.location.id.toString() === booking.toStopId?.toString())?.location.custom_name || t("selectDestination"))
-                              : t("selectDestination")}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableDestinations
-                             .filter((stop) => stop.location.id.toString() !== (booking.fromStopId !== undefined ? booking.fromStopId.toString() : ""))
-                             .map((stop) => (
-                               <SelectItem key={stop.location.id.toString()} value={stop.location.id.toString()} className="truncate">
-                                 <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.location.custom_name}</span> ({stop.price} RWF)
-                               </SelectItem>
-                             ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                </div>
-
-                {/* Show "Allowed Soon" stops for provincial routes */}
-                {!trip.route.city_route && allowedSoonStops.length > 0 && (
-                  <div className="bg-amber-50 p-3 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-amber-800">
-                          {trip.status === "IN_PROGRESS" ? t("upcomingBoardingPoints") : t("futureBoardingPoints")}
+            {!isBookingPossible ? (
+              <div className="p-6">
+                <div className="bg-amber-50 p-4 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-800">
+                        {!trip.route.city_route
+                          ? t("noProvincialBookingPoints")
+                          : t("noCityBookingPoints")}
+                      </p>
+                      {!trip.route.city_route && trip.status === "IN_PROGRESS" && (
+                        <p className="text-sm text-amber-700 mt-2">
+                          {t("finalDestinationOnly")}
                         </p>
-                        <p className="text-xs text-amber-700 mt-1">
-                          {trip.status === "IN_PROGRESS"
-                            ? t("nextBoardingMessage")
-                            : t("futureBoardingMessage")}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {allowedSoonStops.map((stop, index) => (
-                            <Badge
-                              key={typeof stop.id !== 'undefined' ? `soon-${stop.id}` : `soon-${stop.location.custom_name}-${index}`}
-                              variant="outline"
-                              className={`text-xs ${index === 0 && trip.status === "IN_PROGRESS" 
-                                ? "bg-green-50 text-green-800 border-green-300" 
-                                : "bg-amber-100 text-amber-800 border-amber-300"}`}
-                            >
-                              {index === 0 && trip.status === "IN_PROGRESS" && "→ "}
-                              {stop.location.custom_name}
-                              {index === 0 && trip.status === "IN_PROGRESS" && ` (${t("nextAvailable")})`}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                  <div className="space-y-2">
-                    <Label htmlFor="seats">{t("numberOfSeats")}</Label>
-                    <Select
-                      value={booking.seats?.toString()}
-                      onValueChange={(value) => setBooking({ ...booking, seats: Number.parseInt(value) })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: Math.min(trip.seats, 4) }, (_, i) => (
-                          <SelectItem key={i + 1} value={(i + 1).toString()}>
-                            {i === 0 ? t("seat") : t("seats")} {i + 1}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Price beside seat selection */}
-                  <div className="flex flex-col items-end justify-end min-h-[40px]">
-                    {booking.fromStopId && booking.toStopId && booking.seats ? (
-                      (() => {
-                        const segPrice = getSegmentPrice(trip, booking.fromStopId, booking.toStopId);
-                        const total = segPrice * booking.seats;
-                        return (
-                          <span className="font-semibold text-green-700 text-lg">
-                            {t("totalLabel")}: {total} RWF
-                          </span>
-                        );
-                      })()
-                    ) : (
-                      <span className="text-muted-foreground text-sm">{t("selectStopsAndSeatsForPrice")}</span>
-                    )}
                   </div>
                 </div>
-
-                {/* Booking Rules Info */}
-                {/* {trip.routeType === "provincial" && (
-                  <div className="bg-amber-50 p-3 rounded-lg text-sm">
-                    <strong>{t("ruralRouteRules")}:</strong>
-                    {trip.status === "scheduled" ? (
-                      <span> Boarding only from origin. All destinations available for booking.</span>
-                    ) : (
-                      <span> {t("ruralDepartedRule")}</span>
-                    )}
-                  </div>
-                )} */}
-
-                {/* {trip.routeType === "city" && (
-                  <div className="bg-blue-50 p-3 rounded-lg text-sm">
-                    <strong>{t("cityRoute")}:</strong> {t("cityRouteRule")}
-                  </div>
-                )} */}
-              </CardContent>
-            </Card>
-
-            {/* Passenger Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t("passengerInformation")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="passengerName">{t("fullName")} *</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="passengerName"
-                      value={booking.passengerName}
-                      onChange={(e) => setBooking({ ...booking, passengerName: e.target.value })}
-                      placeholder={t("enterFullName")}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Phone number logic: only show passengerPhone if not logged in, else show paymentPhone */}
-                {!user ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="passengerPhone">{t("phoneNumber")} *</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="passengerPhone"
-                        value={booking.passengerPhone}
-                        onChange={(e) => setBooking({ ...booking, passengerPhone: e.target.value })}
-                        placeholder="+250 xxx xxx xxx"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* <div className="space-y-2">
-                  <Label htmlFor="passengerEmail">{t("email")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="passengerEmail"
-                      type="email"
-                      value={booking.passengerEmail}
-                      onChange={(e) => setBooking({ ...booking, passengerEmail: e.target.value })}
-                      placeholder="your.email@example.com"
-                      className="pl-10"
-                    />
-                  </div>
-                </div> */}
-              </CardContent>
-            </Card>
-
-            {/* Payment Information: only show if user is logged in */}
-            {user && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t("paymentInformation")}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="paymentPhone">{t("mobileMoneyNumber")} *</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="paymentPhone"
-                        value={paymentPhone}
-                        onChange={(e) => setPaymentPhone(e.target.value)}
-                        placeholder="+250 xxx xxx xxx"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">{t("paymentPrompt")}</p>
-                  </div>
-                  <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">{t("registeredPhoneNote")}</div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 items-center justify-between">
-              <Button type="button" variant="outline" onClick={handleClose} className="flex-1 max-w-[120px]">
-                {t("cancel")}
-              </Button>
-              <div className="flex items-center gap-4 flex-1 justify-end">
-                <span className="font-semibold text-green-700 text-lg whitespace-nowrap">
-                  {t("totalLabel")} {booking.fromStopId && booking.toStopId && booking.seats ? getSegmentPrice(trip, booking.fromStopId, booking.toStopId) * booking.seats : 0} RWF
-                </span>
-                <Button
-                  type="submit"
-                  disabled={
-                    isSubmitting ||
-                    !booking.fromStopId ||
-                    !booking.toStopId ||
-                    !booking.passengerName ||
-                    (!user ? !booking.passengerPhone : !paymentPhone)
-                  }
-                  className="bg-green-600 hover:bg-green-700 min-w-[160px]"
-                >
-                  {isSubmitting ? t("processing") : `${t("bookFor")} ${booking.fromStopId && booking.toStopId && booking.seats ? getSegmentPrice(trip, booking.fromStopId, booking.toStopId) * booking.seats : 0} RWF`}
+                <Button onClick={handleClose} className="w-full mt-4">
+                  {t("close")}
                 </Button>
               </div>
-            </div>
-          </form>
-        )}
-      </DialogContent>
-    </Dialog>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Route Selection */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t("journeyDetails")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2 w-full">
+                        <Label htmlFor="fromStop">{t("from")}</Label>
+                        {trip.route.city_route ? (
+                          <Select
+                            value={booking.fromStopId != null ? booking.fromStopId.toString() : ""}
+                            onValueChange={(value) => setBooking({ ...booking, fromStopId: value, toStopId: undefined })}
+                          >
+                            <SelectTrigger className="w-full">
+                              <span className="truncate">
+                                {booking.fromStopId !== undefined && booking.fromStopId !== null
+                                  ? String(cityRouteFromOptions.find((stop) => stop.id.toString() === booking.fromStopId?.toString())?.custom_name || t("selectOrigin"))
+                                  : t("selectOrigin")}
+                              </span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cityRouteFromOptions.map((stop) => (
+                                <SelectItem
+                                  key={stop.id.toString()}
+                                  value={stop.id.toString()}
+                                  className="truncate"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.custom_name}</span>
+                                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                                      Available
+                                    </Badge>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Select
+                            value={booking.fromStopId != null ? booking.fromStopId.toString() : ""}
+                            onValueChange={(value) => setBooking({ ...booking, fromStopId: value, toStopId: undefined })}
+                          >
+                            <SelectTrigger className="w-full">
+                              <span className="truncate">
+                                {booking.fromStopId !== undefined && booking.fromStopId !== null
+                                  ? String(availableOrigins.find((stop) => stop.location.id.toString() === booking.fromStopId?.toString())?.location.custom_name || t("selectOrigin"))
+                                  : t("selectOrigin")}
+                              </span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableOrigins
+                                .filter((stop) => stop.location.id.toString() !== booking.fromStopId?.toString())
+                                .map((stop) => (
+                                  <SelectItem key={stop.location.id.toString()} value={stop.location.id.toString()} className="truncate">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.location.custom_name}</span>
+                                      {stop.price > 0 && <span className="text-muted-foreground">({stop.price} RWF)</span>}
+                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                                        Available
+                                      </Badge>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 w-full">
+                        <Label htmlFor="toStop">{t("to")}</Label>
+                        {trip.route.city_route ? (
+                          <Select
+                            value={booking.toStopId != null ? booking.toStopId.toString() : ""}
+                            onValueChange={(value) => setBooking({ ...booking, toStopId: value })}
+                            disabled={!booking.fromStopId}
+                          >
+                            <SelectTrigger className="w-full">
+                              <span className="truncate">
+                                {booking.toStopId !== undefined && booking.toStopId !== null
+                                  ? String(cityRouteToOptions.find((stop) => stop.id.toString() === booking.toStopId?.toString())?.custom_name || t("selectDestination"))
+                                  : t("selectDestination")}
+                              </span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {cityRouteToOptions.map((stop) => (
+                                <SelectItem
+                                  key={stop.id.toString()}
+                                  value={stop.id.toString()}
+                                  className="truncate"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.custom_name}</span>
+                                    <span className="text-muted-foreground">({getSegmentPrice(trip, booking.fromStopId!, stop.id.toString())} RWF)</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Select
+                            value={booking.toStopId != null ? booking.toStopId.toString() : ""}
+                            onValueChange={(value) => setBooking({ ...booking, toStopId: value })}
+                            disabled={!booking.fromStopId}
+                          >
+                            <SelectTrigger className="w-full">
+                              <span className="truncate">
+                                {booking.toStopId !== undefined && booking.toStopId !== null
+                                  ? String(availableDestinations.find((stop) => stop.location.id.toString() === booking.toStopId?.toString())?.location.custom_name || t("selectDestination"))
+                                  : t("selectDestination")}
+                              </span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableDestinations
+                                 .filter((stop) => stop.location.id.toString() !== (booking.fromStopId !== undefined ? booking.fromStopId.toString() : ""))
+                                 .map((stop) => (
+                                   <SelectItem key={stop.location.id.toString()} value={stop.location.id.toString()} className="truncate">
+                                     <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.location.custom_name}</span> ({stop.price} RWF)
+                                   </SelectItem>
+                                 ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Show "Allowed Soon" stops for provincial routes */}
+                    {!trip.route.city_route && allowedSoonStops.length > 0 && (
+                      <div className="bg-amber-50 p-3 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-amber-800">
+                              {trip.status === "IN_PROGRESS" ? t("upcomingBoardingPoints") : t("futureBoardingPoints")}
+                            </p>
+                            <p className="text-xs text-amber-700 mt-1">
+                              {trip.status === "IN_PROGRESS"
+                                ? t("nextBoardingMessage")
+                                : t("futureBoardingMessage")}
+                            </p>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {allowedSoonStops.map((stop, index) => (
+                                <Badge
+                                  key={typeof stop.id !== 'undefined' ? `soon-${stop.id}` : `soon-${stop.location.custom_name}-${index}`}
+                                  variant="outline"
+                                  className={`text-xs ${index === 0 && trip.status === "IN_PROGRESS" 
+                                    ? "bg-green-50 text-green-800 border-green-300" 
+                                    : "bg-amber-100 text-amber-800 border-amber-300"}`}
+                                >
+                                  {index === 0 && trip.status === "IN_PROGRESS" && "→ "}
+                                  {stop.location.custom_name}
+                                  {index === 0 && trip.status === "IN_PROGRESS" && ` (${t("nextAvailable")})`}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                      <div className="space-y-2">
+                        <Label htmlFor="seats">{t("numberOfSeats")}</Label>
+                        <Select
+                          value={booking.seats?.toString()}
+                          onValueChange={(value) => setBooking({ ...booking, seats: Number.parseInt(value) })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: Math.min(trip.seats, 4) }, (_, i) => (
+                              <SelectItem key={i + 1} value={(i + 1).toString()}>
+                                {i === 0 ? t("seat") : t("seats")} {i + 1}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {/* Price beside seat selection */}
+                      <div className="flex flex-col items-end justify-end min-h-[40px]">
+                        {booking.fromStopId && booking.toStopId && booking.seats ? (
+                          (() => {
+                            const segPrice = getSegmentPrice(trip, booking.fromStopId, booking.toStopId);
+                            const total = segPrice * booking.seats;
+                            return (
+                              <span className="font-semibold text-green-700 text-lg">
+                                {t("totalLabel")}: {total} RWF
+                              </span>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-muted-foreground text-sm">{t("selectStopsAndSeatsForPrice")}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Booking Rules Info */}
+                    {/* {trip.routeType === "provincial" && (
+                      <div className="bg-amber-50 p-3 rounded-lg text-sm">
+                        <strong>{t("ruralRouteRules")}:</strong>
+                        {trip.status === "scheduled" ? (
+                          <span> Boarding only from origin. All destinations available for booking.</span>
+                        ) : (
+                          <span> {t("ruralDepartedRule")}</span>
+                        )}
+                      </div>
+                    )} */}
+
+                    {/* {trip.routeType === "city" && (
+                      <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                        <strong>{t("cityRoute")}:</strong> {t("cityRouteRule")}
+                      </div>
+                    )} */}
+                  </CardContent>
+                </Card>
+
+                {/* Passenger Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{t("passengerInformation")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="passengerName">{t("fullName")} *</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="passengerName"
+                          value={booking.passengerName}
+                          onChange={(e) => setBooking({ ...booking, passengerName: e.target.value })}
+                          placeholder={t("enterFullName")}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Phone number logic: only show passengerPhone if not logged in, else show paymentPhone */}
+                    {!user ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="passengerPhone">{t("phoneNumber")} *</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="passengerPhone"
+                            value={booking.passengerPhone}
+                            onChange={(e) => setBooking({ ...booking, passengerPhone: e.target.value })}
+                            placeholder="+250 xxx xxx xxx"
+                            className="pl-10"
+                            required
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* <div className="space-y-2">
+                      <Label htmlFor="passengerEmail">{t("email")}</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="passengerEmail"
+                          type="email"
+                          value={booking.passengerEmail}
+                          onChange={(e) => setBooking({ ...booking, passengerEmail: e.target.value })}
+                          placeholder="your.email@example.com"
+                          className="pl-10"
+                        />
+                      </div>
+                    </div> */}
+                  </CardContent>
+                </Card>
+
+                {/* Payment Information: only show if user is logged in */}
+                {user && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{t("paymentInformation")}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="paymentPhone">{t("mobileMoneyNumber")} *</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="paymentPhone"
+                            value={paymentPhone}
+                            onChange={(e) => setPaymentPhone(e.target.value)}
+                            placeholder="+250 xxx xxx xxx"
+                            className="pl-10"
+                            required
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{t("paymentPrompt")}</p>
+                      </div>
+                      <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">{t("registeredPhoneNote")}</div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 items-center justify-between">
+                  <Button type="button" variant="outline" onClick={handleClose} className="flex-1 max-w-[120px]">
+                    {t("cancel")}
+                  </Button>
+                  <div className="flex items-center gap-4 flex-1 justify-end">
+                    <span className="font-semibold text-green-700 text-lg whitespace-nowrap">
+                      {t("totalLabel")} {booking.fromStopId && booking.toStopId && booking.seats ? getSegmentPrice(trip, booking.fromStopId, booking.toStopId) * booking.seats : 0} RWF
+                    </span>
+                    <Button
+                      type="submit"
+                      disabled={
+                        isSubmitting ||
+                        !booking.fromStopId ||
+                        !booking.toStopId ||
+                        !booking.passengerName ||
+                        (!user ? !booking.passengerPhone : !paymentPhone)
+                      }
+                      className="bg-green-600 hover:bg-green-700 min-w-[160px]"
+                    >
+                      {isSubmitting ? t("processing") : `${t("bookFor")} ${booking.fromStopId && booking.toStopId && booking.seats ? getSegmentPrice(trip, booking.fromStopId, booking.toStopId) * booking.seats : 0} RWF`}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   )
 }
