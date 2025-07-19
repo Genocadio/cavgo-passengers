@@ -260,7 +260,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
     }
     const confirmFromName = getStopNameById(pendingBooking.fromStopId!);
     const confirmToName = getStopNameById(pendingBooking.toStopId!);
-    const companyName = trip.car_company;
+    const companyName = trip.vehicle.company_name;
 
     // Departure time logic
     let pickupTimeDisplay = null;
@@ -314,7 +314,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                 )}
                 <div className="flex justify-between">
                   <span>Car Plate:</span>
-                  <span className="font-medium">{trip.car_plate}</span>
+                  <span className="font-medium">{trip.vehicle.license_plate}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>{t("seats")}:</span>

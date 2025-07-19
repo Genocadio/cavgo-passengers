@@ -46,7 +46,7 @@ export default function HomePage() {
   const tripsByCompany = useMemo(() => {
     const companyTrips = new Map<string, number>()
     trips.forEach((trip: Trip) => {
-      const company = companies.find((c) => c.name && trip.car_company && c.name.toLowerCase() === trip.car_company.toLowerCase())
+      const company = companies.find((c) => c.name && trip.vehicle.company_name && c.name.toLowerCase() === trip.vehicle.company_name.toLowerCase())
       if (company) {
         companyTrips.set(company.name, (companyTrips.get(company.name) || 0) + 1)
       }

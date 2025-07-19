@@ -24,7 +24,7 @@ interface RouteCardProps {
 export default function RouteCard({ trip }: RouteCardProps) {
   const { t } = useLanguage()
   const [showBookingModal, setShowBookingModal] = useState(false)
-  const company = trip.car_company
+  const company = trip.vehicle.company_name
   const availableDestinations = getAvailableDestinations(trip)
   const availableOrigins = getAvailableOrigins(trip)
   const upcomingStops = getUpcomingStops(trip)
@@ -83,11 +83,11 @@ export default function RouteCard({ trip }: RouteCardProps) {
               </CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="h-4 w-4" />
-                <span className="font-medium">{trip.car_company}</span>
-                {company && (
+                <span className="font-medium">{trip.vehicle.company_name}</span>
+                {/* {company && (
                   <span className="text-xs ml-2">Car Company: {company}</span>
-                )}
-                <span className="text-xs ml-2">Car Plate: {trip.car_plate}</span>
+                )} */}
+                <span className="text-xs ml-2">Car Plate: {trip.vehicle.license_plate}</span>
                 <span className="text-xs">Price: {trip.route.route_price}</span>
               </div>
             </div>

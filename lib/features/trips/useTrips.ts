@@ -15,6 +15,19 @@ interface Location {
   updated_at: string;
 }
 
+export interface Driver{
+  name: string;
+  phone: string;
+}
+export interface Vehicle {
+  id: number;
+  company_id: number;
+  company_name: string;
+  capacity: number;
+  license_plate: string;
+  driver: Driver;
+}
+
 export interface TripWaypoint {
   id: string;
   trip_id: number;
@@ -52,8 +65,8 @@ interface Route {
 export interface Trip {
   id: number;
   route_id: number;
-  car_plate: string;
-  car_company: string;
+  vehicle_id: number;
+  vehicle: Vehicle;
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'NOT_COMPLETED';
   departure_time: number;
   completion_time?: number | null;
