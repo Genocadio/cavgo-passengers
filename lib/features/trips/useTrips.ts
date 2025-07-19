@@ -90,6 +90,7 @@ export function useTrips(filters?: {
   origin?: string;
   destination?: string;
   company?: string;
+  city_route?: boolean;
 }) {
   const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "http://localhost:8080/api";
   const { data, status, error } = useQuery<Trip[], Error>({
@@ -100,6 +101,7 @@ export function useTrips(filters?: {
       if (filters?.origin) params.append('origin', filters.origin);
       if (filters?.destination) params.append('destination', filters.destination);
       if (filters?.company) params.append('company', filters.company);
+      if (filters?.city_route !== undefined) params.append('city_route', filters.city_route.toString());
       if (Array.from(params).length > 0) {
         url += `?${params.toString()}`;
       }

@@ -29,6 +29,7 @@ export default function HomePage() {
     origin: searchFilters.origin,
     destination: searchFilters.destination,
     company: searchFilters.company,
+    city_route: searchFilters.city_route,
   }) as { trips: Trip[], status: string, error: string | null }
 
   // Calculate new metrics
