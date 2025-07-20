@@ -49,6 +49,47 @@ function highlightMatch(text: string, search: string | undefined, fullMatch = fa
   return <>{text.substring(0, idx)}<span className="bg-blue-200 text-blue-900 px-1 rounded font-semibold shadow-sm transition-colors duration-200">{text.substring(idx, idx + search.length)}</span>{text.substring(idx + search.length)}</>;
 }
 
+// highlightWholeWordMatch: highlights the whole word if search is a substring (case-insensitive)
+function highlightWholeWordMatch(text: string, search: string | undefined) {
+  if (!search || !text) return text;
+  const words = text.split(/(\s+)/); // keep spaces
+  const lowerSearch = search.toLowerCase();
+  return words.map((word, i) => {
+    // Only highlight non-space words
+    if (word.trim() && word.toLowerCase().includes(lowerSearch)) {
+      return <span key={i} className="bg-blue-200 text-blue-900 px-1 rounded font-semibold shadow-sm transition-colors duration-200">{word}</span>;
+    }
+    return word;
+  });
+}
+
+// highlightFullFieldMatch: highlights the entire field with a glowing green animated border if search is a substring (case-insensitive)
+function highlightFullFieldMatch(text: string, search: string | undefined) {
+  if (!search || !text) return text;
+  if (text.toLowerCase().includes(search.toLowerCase())) {
+    return (
+      <span
+        className="border-2 border-green-400 rounded-full px-2 font-semibold shadow-[0_0_8px_2px_rgba(34,197,94,0.7)] animate-glow-green"
+        style={{ display: 'inline-block' }}
+      >
+        {text}
+      </span>
+    );
+  }
+  return text;
+}
+
+// Add the animation to the global CSS if not present
+// @layer utilities {
+//   @keyframes glow-green {
+//     0%, 100% { box-shadow: 0 0 8px 2px rgba(34,197,94,0.7); }
+//     50% { box-shadow: 0 0 16px 4px rgba(34,197,94,1); }
+//   }
+//   .animate-glow-green {
+//     animation: glow-green 1.2s infinite alternate;
+//   }
+// }
+
 export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCardProps) {
   const { t } = useLanguage()
   const [showBookingModal, setShowBookingModal] = useState(false)
@@ -110,10 +151,10 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
             <div className="space-y-1">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Bus className="h-5 w-5" />
-                {/* Highlight entire origin/destination if full match */}
-                {highlightMatch(trip.route.origin.custom_name || '', searchFilters?.origin, true)}
+                {/* Highlight origin/destination: full field if search is substring */}
+                {highlightFullFieldMatch(trip.route.origin.custom_name || '', searchFilters?.origin)}
                 {" → "}
-                {highlightMatch(trip.route.destination.custom_name || '', searchFilters?.destination, true)}
+                {highlightFullFieldMatch(trip.route.destination.custom_name || '', searchFilters?.destination)}
               </CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="h-4 w-4" />
@@ -132,17 +173,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
               </Badge>
               {/* City/Province badge: hide on xs and sm, show on md+ */}
               <Badge className={`${getRouteTypeColor(trip.route.city_route)} text-white hidden md:inline-flex`}>
-                {searchFilters?.city_route === undefined || searchFilters?.city_route === null
-                  ? (trip.route.city_route ? "city" : "province")
-                  : (
-                    <span className={
-                      trip.route.city_route === searchFilters.city_route
-                        ? "bg-blue-200 text-blue-900 px-1 rounded font-semibold shadow-sm"
-                        : ""
-                    }>
-                      {trip.route.city_route ? "city" : "province"}
-                    </span>
-                  )}
+                {trip.route.city_route ? "city" : "province"}
               </Badge>
             </div>
           </div>
@@ -241,13 +272,13 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                         ${false ? "bg-blue-600 text-white border-blue-600" : ""}
                         ${isNext ? "bg-amber-100 text-amber-800 border-amber-200" : ""}
                         ${stop.is_passed ? "opacity-60" : ""}
-                        ${(highlightOrigin || highlightDestination) ? "bg-blue-200 text-blue-900 border-blue-300 font-semibold shadow-sm" : ""}
                       `}
                     >
+                      {/* Highlight full field in stop name if search matches */}
                       {highlightOrigin
-                        ? highlightMatch(stopName, searchFilters?.origin)
+                        ? highlightFullFieldMatch(stopName, searchFilters?.origin)
                         : highlightDestination
-                        ? highlightMatch(stopName, searchFilters?.destination)
+                        ? highlightFullFieldMatch(stopName, searchFilters?.destination)
                         : stopName}
                       {false && <span className="ml-1">({t("currentLocation")})</span>}
                       {isNext && <span className="ml-1">({t("nextStop")})</span>}

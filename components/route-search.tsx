@@ -29,6 +29,8 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
   const [companyInput, setCompanyInput] = useState("")
   const downshiftId = useId()
 
+  const disableFilters = !!origin && !!destination;
+
   // Automatically trigger search on any filter change
   useEffect(() => {
     onSearch({ origin, destination, company, city_route: cityRoute, departedCity })
@@ -134,7 +136,7 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
 
       {/* Filters */}
       <div className="md:col-span-3 flex items-center gap-4">
-        <label className="flex items-center gap-2">
+        <div className="flex items-center gap-2" title={disableFilters ? t("filtersDisabledTooltip") || "These filters can’t be used when both origin and destination are set." : undefined}>
           <input
             type="checkbox"
             checked={departedCity}
@@ -145,11 +147,12 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
               if (!checked && cityRoute === true) setCityRoute(null)
             }}
             className="h-5 w-5"
+            disabled={disableFilters}
           />
           <span>{t("departedCityRoutes")}</span>
-        </label>
+        </div>
 
-        <label className="flex items-center gap-2">
+        <div className="flex items-center gap-2" title={disableFilters ? t("filtersDisabledTooltip") || "These filters can’t be used when both origin and destination are set." : undefined}>
           <input
             type="checkbox"
             checked={cityRoute === false}
@@ -163,9 +166,10 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
               }
             }}
             className="h-5 w-5"
+            disabled={disableFilters}
           />
           <span>{t("ruralRoutes")}</span>
-        </label>
+        </div>
       </div>
 
       {/* Actions - removed search and reset buttons */}
