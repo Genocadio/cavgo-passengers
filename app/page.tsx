@@ -234,6 +234,7 @@ export default function HomePage() {
                     key={trip.id} 
                     trip={trip} 
                     lastUpdate={tripUpdates.get(trip.id)}
+                    searchFilters={searchFilters}
                   />
                 ))}
               </div>

@@ -26,9 +26,30 @@ interface TripUpdate {
 interface RouteCardProps {
   trip: Trip
   lastUpdate?: TripUpdate | null
+  searchFilters?: {
+    origin?: string
+    destination?: string
+    company?: string
+    city_route?: boolean | null
+    departedCity?: boolean
+  }
 }
 
-export default function RouteCard({ trip, lastUpdate }: RouteCardProps) {
+// Enhanced highlightMatch: supports fullMatch and blue color
+function highlightMatch(text: string, search: string | undefined, fullMatch = false) {
+  if (!search || !text) return text;
+  if (fullMatch) {
+    if (text.trim().toLowerCase() === search.trim().toLowerCase()) {
+      return <span className="bg-blue-200 text-blue-900 px-1 rounded font-semibold shadow-sm transition-colors duration-200">{text}</span>;
+    }
+    return text;
+  }
+  const idx = text.toLowerCase().indexOf(search.toLowerCase());
+  if (idx === -1) return text;
+  return <>{text.substring(0, idx)}<span className="bg-blue-200 text-blue-900 px-1 rounded font-semibold shadow-sm transition-colors duration-200">{text.substring(idx, idx + search.length)}</span>{text.substring(idx + search.length)}</>;
+}
+
+export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCardProps) {
   const { t } = useLanguage()
   const [showBookingModal, setShowBookingModal] = useState(false)
   const company = trip.vehicle.company_name
@@ -89,11 +110,14 @@ export default function RouteCard({ trip, lastUpdate }: RouteCardProps) {
             <div className="space-y-1">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Bus className="h-5 w-5" />
-                {trip.route.origin.custom_name} → {trip.route.destination.custom_name}
+                {/* Highlight entire origin/destination if full match */}
+                {highlightMatch(trip.route.origin.custom_name || '', searchFilters?.origin, true)}
+                {" → "}
+                {highlightMatch(trip.route.destination.custom_name || '', searchFilters?.destination, true)}
               </CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="h-4 w-4" />
-                <span className="font-medium">{trip.vehicle.company_name}</span>
+                <span className="font-medium">{highlightMatch(trip.vehicle.company_name || '', searchFilters?.company)}</span>
                 {/* {company && (
                   <span className="text-xs ml-2">Car Company: {company}</span>
                 )} */}
@@ -108,7 +132,17 @@ export default function RouteCard({ trip, lastUpdate }: RouteCardProps) {
               </Badge>
               {/* City/Province badge: hide on xs and sm, show on md+ */}
               <Badge className={`${getRouteTypeColor(trip.route.city_route)} text-white hidden md:inline-flex`}>
-                {trip.route.city_route ? "city" : "province"}
+                {searchFilters?.city_route === undefined || searchFilters?.city_route === null
+                  ? (trip.route.city_route ? "city" : "province")
+                  : (
+                    <span className={
+                      trip.route.city_route === searchFilters.city_route
+                        ? "bg-blue-200 text-blue-900 px-1 rounded font-semibold shadow-sm"
+                        : ""
+                    }>
+                      {trip.route.city_route ? "city" : "province"}
+                    </span>
+                  )}
               </Badge>
             </div>
           </div>
@@ -196,17 +230,25 @@ export default function RouteCard({ trip, lastUpdate }: RouteCardProps) {
               <div className="flex flex-wrap gap-1">
                 {trip.waypoints.map((stop, index) => {
                   const isNext = !stop.is_passed && stop.order === minUnpassedOrder;
+                  const stopName = stop.location?.custom_name || '';
+                  const highlightOrigin = !!searchFilters?.origin && stopName.toLowerCase().includes((searchFilters.origin || '').toLowerCase());
+                  const highlightDestination = !!searchFilters?.destination && stopName.toLowerCase().includes((searchFilters.destination || '').toLowerCase());
                   return (
                     <Badge
-                      key={(stop as any).id ?? `${stop.location.custom_name}-${index}`}
+                      key={(stop as any).id ?? `${stopName}-${index}`}
                       variant={stop.is_passed? "secondary" : "outline"}
                       className={`text-xs
                         ${false ? "bg-blue-600 text-white border-blue-600" : ""}
                         ${isNext ? "bg-amber-100 text-amber-800 border-amber-200" : ""}
                         ${stop.is_passed ? "opacity-60" : ""}
+                        ${(highlightOrigin || highlightDestination) ? "bg-blue-200 text-blue-900 border-blue-300 font-semibold shadow-sm" : ""}
                       `}
                     >
-                      {stop.location.custom_name}
+                      {highlightOrigin
+                        ? highlightMatch(stopName, searchFilters?.origin)
+                        : highlightDestination
+                        ? highlightMatch(stopName, searchFilters?.destination)
+                        : stopName}
                       {false && <span className="ml-1">({t("currentLocation")})</span>}
                       {isNext && <span className="ml-1">({t("nextStop")})</span>}
                       {typeof stop.price === "number" && stop.price > 0 && ` (${stop.price} RWF)`}
