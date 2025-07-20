@@ -13,6 +13,17 @@ import { useTickets } from "@/lib/ticket-storage"
 import { useTrips, Trip, TripWaypoint } from '@/lib/features/trips/useTrips'
 import { useTripSubscription } from '@/lib/features/trips/useTripSubscription'
 import RouteCard from "@/components/route-card"
+import { TripCardSkeleton } from "@/components/trip-card"
+
+function DelayedLoadingIndicator({ delay = 1000, text }: { delay?: number, text: string }) {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setShow(true), delay)
+    return () => clearTimeout(timer)
+  }, [delay])
+  if (!show) return null
+  return <div className="text-center py-4 text-gray-400 animate-pulse">{text}</div>
+}
 
 export default function HomePage() {
   const { t } = useLanguage()
@@ -141,7 +152,11 @@ export default function HomePage() {
         {/* Results */}
         <div className="space-y-6">
           {status === 'pending' ? (
-            <div className="text-center py-12">Loading...</div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <TripCardSkeleton key={i} />
+              ))}
+            </div>
           ) : error ? (
             (() => {
               let title = t("serviceUnavailable") || "Service Unavailable";
@@ -223,8 +238,9 @@ export default function HomePage() {
                 ))}
               </div>
               <div ref={loadMoreRef} style={{ height: 1 }} />
+              {/* Show a subtle loading indicator for pagination only if loading is slow */}
               {isFetchingNextPage && (
-                <div className="text-center py-4">{t('loadingMore') || 'Loading more...'}</div>
+                <DelayedLoadingIndicator delay={1000} text={t('loadingMore') || 'Loading more...'} />
               )}
               {!hasNextPage && trips.length > 0 && (
                 <div className="text-center py-4 text-gray-400">{t('noMoreResults') || 'No more results.'}</div>
