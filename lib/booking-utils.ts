@@ -69,7 +69,24 @@ export function getAvailableOrigins(trip: Trip): TripWaypoint[] {
   }
   const finalDestination = trip.route.destination_id;
   if (trip.route.city_route) {
-    return trip.waypoints.filter((stop) => !stop.is_passed && stop.location_id !== finalDestination)
+    if(trip.status == "SCHEDULED") {
+      const waypointOrigins = trip.waypoints.filter((stop) => !stop.is_passed && stop.location_id !== finalDestination)
+      // Add origin as the first option for city routes
+      const originWaypoint = {
+        id: `${trip.route.origin_id}`,
+        trip_id: trip.id,
+        location_id: trip.route.origin_id,
+        order: 0,
+        price: 0,
+        is_passed: false,
+        is_next: true,
+        is_custom: false,
+        created_at: trip.created_at,
+        updated_at: trip.updated_at,
+        location: trip.route.origin,
+      } as TripWaypoint
+      return [originWaypoint, ...waypointOrigins]
+    }
   } else {
     if (trip.status === "SCHEDULED") {
       const origins = trip.waypoints.filter((stop) => stop.location_id === trip.route.origin_id)

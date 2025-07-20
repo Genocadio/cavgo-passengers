@@ -15,7 +15,7 @@ export interface SearchFilters {
   origin: string
   destination: string
   company: string
-  city_route: boolean
+  city_route: boolean | null
   departedCity: boolean
 }
 
@@ -25,7 +25,7 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
   const [destination, setDestination] = useState("")
   const [company, setCompany] = useState("")
   const [departedCity, setDepartedCity] = useState(false)
-  const [cityRoute, setCityRoute] = useState(false)
+  const [cityRoute, setCityRoute] = useState<boolean | null>(null)
   const [companyInput, setCompanyInput] = useState("")
   const downshiftId = useId()
 
@@ -141,7 +141,8 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
             onChange={(e) => {
               const checked = e.target.checked
               setDepartedCity(checked)
-              if (checked) setCityRoute(false)
+              if (checked) setCityRoute(true)
+              if (!checked && cityRoute === true) setCityRoute(null)
             }}
             className="h-5 w-5"
           />
@@ -151,11 +152,15 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
-            checked={cityRoute}
+            checked={cityRoute === false}
             onChange={(e) => {
               const checked = e.target.checked
-              setCityRoute(checked)
-              if (checked) setDepartedCity(false)
+              if (checked) {
+                setCityRoute(false)
+                setDepartedCity(false)
+              } else {
+                setCityRoute(null)
+              }
             }}
             className="h-5 w-5"
           />

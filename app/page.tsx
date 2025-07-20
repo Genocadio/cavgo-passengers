@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { Bus } from "lucide-react"
 import RouteSearch, { type SearchFilters } from "@/components/route-search"
 import TripCard from "@/components/trip-card"
@@ -24,13 +24,40 @@ export default function HomePage() {
     city_route: false,
   })
 
-  // Use backend filtering
-  const { trips, status, error } = useTrips({
+  // Use backend filtering with pagination
+  const {
+    trips,
+    status,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useTrips({
     origin: searchFilters.origin,
     destination: searchFilters.destination,
     company: searchFilters.company,
-    city_route: searchFilters.city_route,
-  }) as { trips: Trip[], status: string, error: string | null }
+    city_route: searchFilters.city_route ?? undefined,
+  })
+
+  // Infinite scroll sentinel
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!hasNextPage || status !== 'success') return
+    const observer = new window.IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 1 }
+    )
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
+    }
+    return () => {
+      if (loadMoreRef.current) observer.unobserve(loadMoreRef.current)
+    }
+  }, [hasNextPage, fetchNextPage, isFetchingNextPage, status])
 
   // Calculate new metrics
   const uniqueDestinations = useMemo(() => {
@@ -110,11 +137,20 @@ export default function HomePage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-               {trips.map((trip: Trip) => (
-                 <RouteCard key={trip.id} trip={trip} />
-               ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {trips.map((trip: Trip) => (
+                  <RouteCard key={trip.id} trip={trip} />
+                ))}
+              </div>
+              <div ref={loadMoreRef} style={{ height: 1 }} />
+              {isFetchingNextPage && (
+                <div className="text-center py-4">{t('loadingMore') || 'Loading more...'}</div>
+              )}
+              {!hasNextPage && trips.length > 0 && (
+                <div className="text-center py-4 text-gray-400">{t('noMoreResults') || 'No more results.'}</div>
+              )}
+            </>
           )}
         </div>
       </main>

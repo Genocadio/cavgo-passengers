@@ -142,14 +142,14 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="text-base">
-                            {booking.tickets[0]?.pickup_location_name} → {booking.tickets[0]?.dropoff_location_name}
+                            {booking.tickets?.[0]?.pickup_location_name || t("noRouteInfo")} → {booking.tickets?.[0]?.dropoff_location_name || t("noRouteInfo")}
                           </CardTitle>
-                          <p className="text-sm text-muted-foreground">{booking.tickets[0]?.car_company}</p>
-                          <p className="text-xs text-muted-foreground mt-1">Car Plate: {booking.tickets[0]?.car_plate}</p>
+                          <p className="text-sm text-muted-foreground">{booking.tickets?.[0]?.car_company || t("noCompanyInfo")}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Car Plate: {booking.tickets?.[0]?.car_plate || t("noPlateInfo")}</p>
                           {/* Always show booking time */}
                           <p className="text-xs text-muted-foreground mt-1">{t("bookingTime")}: {formatDate(booking.created_at)}</p>
                           {/* Show boarding time (pickup_time of first ticket) */}
-                          {booking.tickets[0]?.pickup_time && (
+                          {booking.tickets?.[0]?.pickup_time && (
                             <p className="text-xs text-muted-foreground mt-1">{t("boardingTime")}: {formatDate(booking.tickets[0].pickup_time)}</p>
                           )}
                         </div>
@@ -168,7 +168,7 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                       </div>
                       <div className="flex flex-wrap gap-2 justify-between items-center">
                         <div className="text-sm text-muted-foreground">
-                          {booking.number_of_tickets} {booking.number_of_tickets === 1 ? t("seat") : t("seats")} • {booking.booking_reference}
+                          {booking.number_of_tickets || 0} {booking.number_of_tickets === 1 ? t("seat") : t("seats")} • {booking.booking_reference || t("noReference")}
                         </div>
                         {booking.payment.status === "PENDING" ? (
                           <Button
@@ -200,7 +200,7 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                         )}
                       </div>
                       {/* Show ticket details inline for paid bookings only if expanded */}
-                      {booking.payment.status === "COMPLETED" && expandedBooking === booking.id && (
+                      {booking.payment.status === "COMPLETED" && expandedBooking === booking.id && booking.tickets && (
                         <div className="mt-2">
                           <ul className="divide-y divide-gray-200 mt-2">
                             {booking.tickets.map((ticket: any, idx: number) => (

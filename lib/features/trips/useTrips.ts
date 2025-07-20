@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, InfiniteData, QueryFunctionContext } from '@tanstack/react-query'
 import axios from 'axios'
 
 // Backend Trip type
@@ -86,29 +86,68 @@ export interface Trip {
   waypoints: TripWaypoint[];
 }
 
+export interface PaginatedTripsResponse {
+  trips: Trip[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export function useTrips(filters?: {
   origin?: string;
   destination?: string;
   company?: string;
   city_route?: boolean;
+  limit?: number;
 }) {
   const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "http://localhost:8080/api";
-  const { data, status, error } = useQuery<Trip[], Error>({
+  const limit = filters?.limit || 20;
+  const {
+    data,
+    status,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<PaginatedTripsResponse, Error>({
     queryKey: ['trips', filters],
-    queryFn: async () => {
+    queryFn: async (context: QueryFunctionContext) => {
+      const offsetParam = (context.pageParam ?? 0) as number;
       let url = `${BACKEND_BASE_URL}/navig/trips`;
       const params = new URLSearchParams();
       if (filters?.origin) params.append('origin', filters.origin);
       if (filters?.destination) params.append('destination', filters.destination);
       if (filters?.company) params.append('company', filters.company);
-      if (filters?.city_route !== undefined) params.append('city_route', filters.city_route.toString());
-      if (Array.from(params).length > 0) {
-        url += `?${params.toString()}`;
-      }
+      if (filters?.city_route === true || filters?.city_route === false) params.append('city_route', filters.city_route.toString());
+      params.append('limit', limit.toString());
+      params.append('offset', offsetParam.toString());
+      url += `?${params.toString()}`;
       const response = await axios.get(url);
       return response.data;
     },
-  })
+    getNextPageParam: (lastPage) => {
+      const nextOffset = lastPage.offset + lastPage.limit;
+      if (nextOffset < lastPage.total) {
+        return nextOffset;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
+  });
 
-  return { trips: data || [], status, error: error ? error.message : null }
+  // Flatten trips from all pages
+  const trips = (data as InfiniteData<PaginatedTripsResponse>)?.pages?.flatMap(page => page.trips) || [];
+  const total = (data as InfiniteData<PaginatedTripsResponse>)?.pages?.[0]?.total || 0;
+  const offset = (data as InfiniteData<PaginatedTripsResponse>)?.pages?.[(data as InfiniteData<PaginatedTripsResponse>)?.pages?.length - 1]?.offset || 0;
+  return {
+    trips,
+    total,
+    limit,
+    offset,
+    status,
+    error: error ? error.message : null,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  };
 } 
