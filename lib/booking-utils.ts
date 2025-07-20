@@ -12,26 +12,6 @@ export function getAvailableDestinations(trip: Trip): TripWaypoint[] {
       filteredWaypoints = trip.waypoints.filter(
         (stop) => stop.location_id !== trip.route.origin_id
       );
-      // Ensure final destination is included if not already present
-      const hasFinalDestination = filteredWaypoints.some(
-        (stop) => String(stop.location_id) === String(trip.route.destination_id)
-      );
-      if (!hasFinalDestination) {
-        // Create a virtual TripWaypoint for the final destination
-        filteredWaypoints.push({
-          id: `${trip.route.destination_id}`,
-          trip_id: trip.id,
-          location_id: trip.route.destination_id,
-          order: trip.waypoints.length, // Place it at the end
-          price: trip.route.route_price || 0,
-          is_passed: false,
-          is_next: false,
-          is_custom: false,
-          created_at: trip.created_at,
-          updated_at: trip.updated_at,
-          location: trip.route.destination,
-        } as TripWaypoint);
-      }
     } else if (trip.status === "IN_PROGRESS") {
       const unpassedStops = trip.waypoints.filter((stop) => !stop.is_passed);
       if (unpassedStops.length > 0) {
@@ -42,6 +22,30 @@ export function getAvailableDestinations(trip: Trip): TripWaypoint[] {
       }
     }
   }
+
+  // Always ensure final destination is available for booking if trip is not completed
+  if (trip.status !== "COMPLETED") {
+    const hasFinalDestination = filteredWaypoints.some(
+      (stop) => String(stop.location_id) === String(trip.route.destination_id)
+    );
+    if (!hasFinalDestination) {
+      // Create a virtual TripWaypoint for the final destination
+      filteredWaypoints.push({
+        id: `${trip.route.destination_id}`,
+        trip_id: trip.id,
+        location_id: trip.route.destination_id,
+        order: trip.waypoints.length, // Place it at the end
+        price: trip.route.route_price || 0,
+        is_passed: false,
+        is_next: false,
+        is_custom: false,
+        created_at: trip.created_at,
+        updated_at: trip.updated_at,
+        location: trip.route.destination,
+      } as TripWaypoint);
+    }
+  }
+
   return filteredWaypoints.sort((a, b) => a.order - b.order);
 }
 

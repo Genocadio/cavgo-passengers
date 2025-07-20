@@ -16,12 +16,19 @@ import {
 } from "@/lib/booking-utils"
 import BookingModal from "./booking-modal"
 import { useLanguage } from "@/lib/language-context"
+import { TripUpdateIndicator } from "./trip-update-indicator"
+
+interface TripUpdate {
+  type: string
+  timestamp: number
+}
 
 interface RouteCardProps {
   trip: Trip
+  lastUpdate?: TripUpdate | null
 }
 
-export default function RouteCard({ trip }: RouteCardProps) {
+export default function RouteCard({ trip, lastUpdate }: RouteCardProps) {
   const { t } = useLanguage()
   const [showBookingModal, setShowBookingModal] = useState(false)
   const company = trip.vehicle.company_name
@@ -73,7 +80,10 @@ export default function RouteCard({ trip }: RouteCardProps) {
 
   return (
     <>
-      <Card className="w-full hover:shadow-lg transition-shadow">
+      <Card className="w-full hover:shadow-lg transition-shadow relative">
+        {/* Real-time update indicator */}
+        <TripUpdateIndicator trip={trip} lastUpdate={lastUpdate} />
+        
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <div className="space-y-1">

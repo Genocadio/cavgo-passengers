@@ -11,6 +11,7 @@ import { useLanguage } from "@/lib/language-context"
 // import TicketModal from "@/components/ticket-modal"
 import { useTickets } from "@/lib/ticket-storage"
 import { useTrips, Trip, TripWaypoint } from '@/lib/features/trips/useTrips'
+import { useTripSubscription } from '@/lib/features/trips/useTripSubscription'
 import RouteCard from "@/components/route-card"
 
 export default function HomePage() {
@@ -32,12 +33,16 @@ export default function HomePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    sseUuid,
   } = useTrips({
     origin: searchFilters.origin,
     destination: searchFilters.destination,
     company: searchFilters.company,
     city_route: searchFilters.city_route ?? undefined,
   })
+
+  // Subscribe to real-time updates
+  const { isConnected, isConnecting, tripUpdates, connectionDetails } = useTripSubscription(sseUuid)
 
   // Infinite scroll sentinel
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -100,6 +105,39 @@ export default function HomePage() {
           <RouteSearch onSearch={setSearchFilters} />
         </div>
 
+        {/* Real-time connection status */}
+        {process.env.NODE_ENV === 'development' && status === 'success' && sseUuid && (
+          <div className="mb-4 flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              isConnected ? 'bg-green-500' : 
+              isConnecting ? 'bg-yellow-500 animate-pulse' : 
+              'bg-red-500'
+            }`} />
+            <span className="text-sm text-gray-600">
+              {isConnected ? 'Live updates connected' : 
+               isConnecting ? 'Connecting to live updates...' : 
+               'Live updates disconnected'}
+            </span>
+            {!isConnected && !isConnecting && (
+              <button 
+                onClick={() => window.location.reload()}
+                className="text-xs text-blue-600 hover:text-blue-800 underline"
+              >
+                Retry
+              </button>
+            )}
+            {/* Debug info in development */}
+            {connectionDetails && (
+              <div className="text-xs text-gray-500 ml-4">
+                <span>Client: {connectionDetails.clientId}</span>
+                {connectionDetails.lastHeartbeat && (
+                  <span className="ml-2">Last heartbeat: {new Date(connectionDetails.lastHeartbeat).toLocaleTimeString()}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Results */}
         <div className="space-y-6">
           {status === 'pending' ? (
@@ -140,7 +178,11 @@ export default function HomePage() {
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {trips.map((trip: Trip) => (
-                  <RouteCard key={trip.id} trip={trip} />
+                  <RouteCard 
+                    key={trip.id} 
+                    trip={trip} 
+                    lastUpdate={tripUpdates.get(trip.id)}
+                  />
                 ))}
               </div>
               <div ref={loadMoreRef} style={{ height: 1 }} />
