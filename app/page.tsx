@@ -143,7 +143,44 @@ export default function HomePage() {
           {status === 'pending' ? (
             <div className="text-center py-12">Loading...</div>
           ) : error ? (
-            <div className="text-center py-12 text-red-500">{error}</div>
+            (() => {
+              let title = t("serviceUnavailable") || "Service Unavailable";
+              let message = t("serviceUnavailableMessage") || "We're updating our service or performing maintenance. Please come back later!";
+              let emoji = "🛠️";
+              if (error === 'SERVICE_UNAVAILABLE') {
+                title = t("serviceUnavailable") || "Service Unavailable";
+                message = t("serviceUnavailableMessage") || "We're updating our service or performing maintenance. Please come back later!";
+                emoji = "🛠️";
+              } else if (error === 'NETWORK_ERROR') {
+                title = t("networkError") || "Network Error";
+                message = t("networkErrorMessage") || "We couldn't connect to the service. Please check your internet connection or try again later.";
+                emoji = "📡";
+              } else if (error === 'TIMEOUT') {
+                title = t("timeoutError") || "Request Timed Out";
+                message = t("timeoutErrorMessage") || "The request took too long. Please try again later.";
+                emoji = "⏳";
+              }
+              return (
+                <div className="flex flex-col items-center justify-center py-16 animate-pulse">
+                  <div className="text-7xl mb-4 animate-bounce">{emoji}</div>
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-2">{title}</h3>
+                  <p className="text-gray-600 mb-4 text-center max-w-md">{message}</p>
+                  {process.env.NODE_ENV === 'development' && (
+                    <>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                      >
+                        {t("retry") || "Retry"}
+                      </button>
+                      <div className="mt-4 text-xs text-red-500 bg-red-50 p-2 rounded">
+                        <strong>Debug:</strong> {error}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()
           ) : trips.length === 0 ? (
             <div className="text-center py-12">
               <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4" />

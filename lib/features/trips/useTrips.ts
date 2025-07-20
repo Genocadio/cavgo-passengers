@@ -174,14 +174,23 @@ export function useTrips(filters?: {
       }
       
       url += `?${params.toString()}`;
-      const response = await axios.get(url);
-      
-      // Store SSE UUID from response if present (backend refreshes UUID on each response)
-      if (response.data.sse_uuid) {
-        sseStorage.set(queryKey, response.data.sse_uuid);
+      try {
+        const response = await axios.get(url);
+        // Store SSE UUID from response if present (backend refreshes UUID on each response)
+        if (response.data.sse_uuid) {
+          sseStorage.set(queryKey, response.data.sse_uuid);
+        }
+        return response.data;
+      } catch (err: any) {
+        if (err?.response?.status === 503) {
+          throw new Error('SERVICE_UNAVAILABLE');
+        } else if (err?.code === 'ECONNABORTED' || err?.message?.includes('Network Error') || err?.message?.includes('Failed to fetch')) {
+          throw new Error('NETWORK_ERROR');
+        } else if (err?.message?.includes('timeout')) {
+          throw new Error('TIMEOUT');
+        }
+        throw err;
       }
-      
-      return response.data;
     },
     getNextPageParam: (lastPage) => {
       const nextOffset = lastPage.offset + lastPage.limit;
