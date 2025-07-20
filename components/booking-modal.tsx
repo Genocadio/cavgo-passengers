@@ -526,7 +526,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
       {/* Only show booking form if user is logged in and modal is open */}
       {isOpen && user && (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-full max-w-md sm:max-w-lg px-4 py-4 rounded-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("bookYourJourney")}</DialogTitle>
             </DialogHeader>
@@ -555,14 +555,14 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Route Selection */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="px-2 sm:px-4 py-2 sm:py-4">
                     <CardTitle className="text-lg">{t("journeyDetails")}</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
+                  <CardContent className="space-y-3 px-2 sm:px-4 py-2 sm:py-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2 w-full">
                         <Label htmlFor="fromStop">{t("from")}</Label>
                         {trip.route.city_route ? (
@@ -775,13 +775,13 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
 
                 {/* Passenger Information */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="px-2 sm:px-4 py-2 sm:py-4">
                     <CardTitle className="text-lg">{t("passengerInformation")}</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3 px-2 sm:px-4 py-2 sm:py-3">
                     <div className="space-y-2">
                       <Label htmlFor="passengerName">{t("fullName")} *</Label>
-                      <div className="relative">
+                      <div className="relative max-w-xs mx-auto w-full">
                         <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="passengerName"
@@ -798,7 +798,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                     {!user ? (
                       <div className="space-y-2">
                         <Label htmlFor="passengerPhone">{t("phoneNumber")} *</Label>
-                        <div className="relative">
+                        <div className="relative max-w-xs mx-auto w-full">
                           <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
                             id="passengerPhone"
@@ -832,13 +832,13 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                 {/* Payment Information: only show if user is logged in */}
                 {user && (
                   <Card>
-                    <CardHeader>
+                    <CardHeader className="px-2 sm:px-4 py-2 sm:py-4">
                       <CardTitle className="text-lg">{t("paymentInformation")}</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-3 px-2 sm:px-4 py-2 sm:py-3">
                       <div className="space-y-2">
                         <Label htmlFor="paymentPhone">{t("mobileMoneyNumber")} *</Label>
-                        <div className="relative">
+                        <div className="relative max-w-xs mx-auto w-full">
                           <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                           <Input
                             id="paymentPhone"
@@ -857,11 +857,11 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-4 items-center justify-between">
-                  <Button type="button" variant="outline" onClick={handleClose} className="flex-1 max-w-[120px]">
+                <div className="flex flex-col md:flex-row gap-3 pt-4 items-center justify-between">
+                  <Button type="button" variant="outline" onClick={handleClose} className="w-full md:flex-1 max-w-[120px]">
                     {t("cancel")}
                   </Button>
-                  <div className="flex items-center gap-4 flex-1 justify-end">
+                  <div className="flex flex-col md:flex-row items-center gap-4 flex-1 justify-end w-full">
                     <span className="font-semibold text-green-700 text-lg whitespace-nowrap">
                       {t("totalLabel")} {booking.fromStopId && booking.toStopId && booking.seats ? getSegmentPrice(trip, booking.fromStopId, booking.toStopId) * booking.seats : 0} RWF
                     </span>
@@ -874,7 +874,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                         !booking.passengerName ||
                         (!user ? !booking.passengerPhone : !paymentPhone)
                       }
-                      className="bg-green-600 hover:bg-green-700 min-w-[160px]"
+                      className="bg-green-600 hover:bg-green-700 min-w-[160px] w-full md:w-auto"
                     >
                       {isSubmitting ? t("processing") : `${t("bookFor")} ${booking.fromStopId && booking.toStopId && booking.seats ? getSegmentPrice(trip, booking.fromStopId, booking.toStopId) * booking.seats : 0} RWF`}
                     </Button>
