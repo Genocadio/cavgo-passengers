@@ -34,7 +34,7 @@ export function getAvailableDestinations(trip: Trip): TripWaypoint[] {
         id: `${trip.route.destination_id}`,
         trip_id: trip.id,
         location_id: trip.route.destination_id,
-        order: trip.waypoints.length, // Place it at the end
+        order: trip.waypoints?.length || 0, // Place it at the end
         price: trip.route.route_price || 0,
         is_passed: false,
         is_next: false,
@@ -133,6 +133,7 @@ export function getAllowedSoonStops(trip: Trip): TripWaypoint[] {
     if (unpassedStops.length <= 1) return []
     const nextBookableStops = unpassedStops.slice(1)
     const finalDestination = trip.waypoints[trip.waypoints.length - 1]
+    if (!finalDestination) return nextBookableStops
     return nextBookableStops.filter(stop => stop.location.id !== finalDestination.location.id)
   } else if (trip.status === "SCHEDULED") {
     const midpoints = trip.waypoints.filter((stop) =>
@@ -182,7 +183,7 @@ export function getEstimatedArrivalTime(trip: Trip, stopId: string): string | nu
   // For demo: estimate based on order difference and a base time (no real-time location)
   const stopIndex = trip.waypoints.findIndex((s) => s.location.id === stopId)
   const nextStopIndex = trip.waypoints.findIndex((s) => s.is_next)
-  if (stopIndex <= nextStopIndex) return null
+  if (stopIndex === -1 || nextStopIndex === -1 || stopIndex <= nextStopIndex) return null
   const baseMinutes = stop.remaining_time || 0
   const additionalStops = stopIndex - nextStopIndex
   const estimatedMinutes = baseMinutes + additionalStops * 15

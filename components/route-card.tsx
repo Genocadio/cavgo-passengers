@@ -99,8 +99,8 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
   const upcomingStops = getUpcomingStops(trip)
   const allowedSoonStops = getAllowedSoonStops(trip)
   const nextStop = upcomingStops.filter((stop) => stop.is_next)[0]
-  const unpassedOrders = trip.waypoints.filter(wp => !wp.is_passed).map(wp => wp.order);
-  const minUnpassedOrder = Math.min(...unpassedOrders);
+  const unpassedOrders = trip.waypoints?.filter(wp => !wp.is_passed).map(wp => wp.order) || [];
+  const minUnpassedOrder = unpassedOrders.length > 0 ? Math.min(...unpassedOrders) : 0;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -181,7 +181,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
 
         <CardContent className="space-y-4">
           {/* Route Progress for Departed Routes */}
-          {trip.status === "IN_PROGRESS" && (
+          {trip.status === "IN_PROGRESS" && nextStop && (
             <div className="bg-blue-50 p-3 rounded-lg">
               <div className="flex items-center gap-2 text-sm">
                 <Navigation className="h-4 w-4 text-blue-600" />
@@ -255,11 +255,11 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
           )}
 
           {/* All Stops for Scheduled Routes */}
-          {trip.status === "SCHEDULED" && Array.isArray(trip.waypoints) && trip.waypoints.length > 0 && (
+          {trip.status === "SCHEDULED" && trip.waypoints && trip.waypoints.length > 0 && (
             <div className="space-y-2">
               <h4 className="font-medium text-sm">{t("routeStops")}</h4>
               <div className="flex flex-wrap gap-1">
-                {trip.waypoints.map((stop, index) => {
+                {trip.waypoints?.map((stop, index) => {
                   const isNext = !stop.is_passed && stop.order === minUnpassedOrder;
                   const stopName = stop.location?.custom_name || '';
                   const highlightOrigin = !!searchFilters?.origin && stopName.toLowerCase().includes((searchFilters.origin || '').toLowerCase());
@@ -295,7 +295,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                 </span> */}
               </div>
               {/* Show next stop info if available */}
-              {nextStop&& (
+              {nextStop && (
                 <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                   <Navigation className="h-4 w-4 text-amber-600" />
                   <span>{t("nextStop")}: {nextStop.location.custom_name}</span>
@@ -319,7 +319,9 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                   ? trip.departure_time
                     ? formatTime(trip.departure_time)
                     : t("timeTBD")
-                  : nextStop.remaining_time + " to next stop"}
+                  : nextStop?.remaining_time 
+                    ? `${nextStop.remaining_time} to next stop`
+                    : t("timeTBD")}
               </span>
             </div>
           </div>
@@ -328,10 +330,12 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
           {process.env.NODE_ENV !== 'production' && (
             <div className="text-xs text-red-500 bg-red-50 p-2 rounded mb-2">
               <div><strong>Debug:</strong></div>
-              <div>availableOrigins: {JSON.stringify(availableOrigins.map(o => o.location.custom_name))}</div>
-              <div>availableDestinations: {JSON.stringify(availableDestinations.map(d => d.location.custom_name))}</div>
+              <div>availableOrigins: {JSON.stringify(availableOrigins.map(o => o.location?.custom_name || 'Unknown'))}</div>
+              <div>availableDestinations: {JSON.stringify(availableDestinations.map(d => d.location?.custom_name || 'Unknown'))}</div>
               <div>canBook: {String(canBook)}</div>
               <div>availableSeats: {trip.seats}</div>
+              <div>waypoints: {trip.waypoints ? trip.waypoints.length : 'undefined'}</div>
+              <div>nextStop: {nextStop ? 'defined' : 'undefined'}</div>
             </div>
           )}
 
