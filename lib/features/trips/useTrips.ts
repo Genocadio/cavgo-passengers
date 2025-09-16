@@ -36,6 +36,7 @@ export interface TripWaypoint {
   price: number;
   is_passed: boolean;
   is_next: boolean;
+  is_pass_through?: boolean;
   passed_timestamp?: number | null;
   remaining_time?: number | null;
   remaining_distance?: number | null;
@@ -180,7 +181,17 @@ export function useTrips(filters?: {
         if (response.data.sse_uuid) {
           sseStorage.set(queryKey, response.data.sse_uuid);
         }
-        return response.data;
+        // Omit pass-through waypoints from trips before returning
+        const transformed: PaginatedTripsResponse = {
+          ...response.data,
+          trips: (response.data.trips || []).map((trip: Trip) => ({
+            ...trip,
+            waypoints: Array.isArray(trip.waypoints)
+              ? trip.waypoints.filter((wp: TripWaypoint) => !wp.is_pass_through)
+              : trip.waypoints,
+          })),
+        };
+        return transformed;
       } catch (err: any) {
         if (err?.response?.status === 503) {
           throw new Error('SERVICE_UNAVAILABLE');

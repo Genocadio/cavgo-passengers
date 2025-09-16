@@ -114,8 +114,13 @@ export function getAvailableOrigins(trip: Trip): TripWaypoint[] {
       }
       return origins;
     } else if (trip.status === "IN_PROGRESS") {
-      const unpassedStops = trip.waypoints.filter((stop) => !stop.is_passed)
-      return unpassedStops.filter((stop) => stop.is_next)
+      const unpassedStops = trip.waypoints
+        .filter((stop) => !stop.is_passed)
+        .sort((a, b) => a.order - b.order)
+      // Prefer the waypoint flagged as next; if none, fallback to the first unpassed waypoint
+      const explicitNext = unpassedStops.find((stop) => stop.is_next)
+      const fallbackNext = unpassedStops[0]
+      return explicitNext ? [explicitNext] : fallbackNext ? [fallbackNext] : []
     }
   }
   return []
