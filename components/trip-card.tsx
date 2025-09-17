@@ -102,6 +102,32 @@ export default function TripCard({ trip }: TripCardProps) {
     })
   }
 
+  // Format remaining time from seconds
+  const formatRemainingTime = (seconds: number | null) => {
+    if (!seconds || seconds <= 0) return ""
+    
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}hr ${minutes}min` : `${hours}hr`
+    } else {
+      return `${minutes}min`
+    }
+  }
+
+  // Format distance from meters
+  const formatDistance = (meters: number | null) => {
+    if (!meters || meters <= 0) return ""
+    
+    const km = meters / 1000
+    if (km < 0.2) {
+      return `${Math.round(meters)}m away`
+    } else {
+      return `${km.toFixed(1)}km`
+    }
+  }
+
   // Status color
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -179,7 +205,7 @@ export default function TripCard({ trip }: TripCardProps) {
               </span>
               {nextWaypoint?.remaining_time && (
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {nextWaypoint.remaining_time} • {nextWaypoint.remaining_distance}m {t("remaining")}
+                  {formatRemainingTime(nextWaypoint.remaining_time)} • {formatDistance(nextWaypoint.remaining_distance ?? null)} {t("remaining")}
                 </span>
               )}
             </div>
