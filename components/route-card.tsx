@@ -268,8 +268,8 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                         </div>
                         <span className="text-muted-foreground">
                           {estimatedTime
-                            ? estimatedTime
-                              ? `~${estimatedTime}`
+                            ? typeof estimatedTime === 'number'
+                              ? `~${formatRemainingTime(estimatedTime)}`
                               : `~${estimatedTime}`
                             : "Calculating..."}
                         </span>
