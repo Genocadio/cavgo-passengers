@@ -49,6 +49,32 @@ function highlightMatch(text: string, search: string | undefined, fullMatch = fa
   return <>{text.substring(0, idx)}<span className="bg-blue-200 text-blue-900 px-1 rounded font-semibold shadow-sm transition-colors duration-200">{text.substring(idx, idx + search.length)}</span>{text.substring(idx + search.length)}</>;
 }
 
+// Format remaining time from seconds
+function formatRemainingTime(seconds: number | null) {
+  if (!seconds || seconds <= 0) return ""
+  
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  
+  if (hours > 0) {
+    return minutes > 0 ? `${hours}hr ${minutes}min` : `${hours}hr`
+  } else {
+    return `${minutes}min`
+  }
+}
+
+// Format distance from meters
+function formatDistance(meters: number | null) {
+  if (!meters || meters <= 0) return ""
+  
+  const km = meters / 1000
+  if (km < 0.2) {
+    return `${Math.round(meters)}m away`
+  } else {
+    return `${km.toFixed(1)}km`
+  }
+}
+
 // highlightWholeWordMatch: highlights the whole word if search is a substring (case-insensitive)
 function highlightWholeWordMatch(text: string, search: string | undefined) {
   if (!search || !text) return text;
@@ -190,7 +216,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                 </span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {nextStop.remaining_distance} • {nextStop.remaining_distance} {t("remaining")}
+                {formatRemainingTime(nextStop.remaining_time ?? null)} • {formatDistance(nextStop.remaining_distance ?? null)} {t("remaining")}
               </div>
             </div>
           )}
@@ -320,7 +346,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                     ? formatTime(trip.departure_time)
                     : t("timeTBD")
                   : nextStop?.remaining_time 
-                    ? `${nextStop.remaining_time} to next stop`
+                    ? `${formatRemainingTime(nextStop.remaining_time ?? null)} to next stop`
                     : t("timeTBD")}
               </span>
             </div>

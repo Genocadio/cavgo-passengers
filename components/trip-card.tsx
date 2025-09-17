@@ -203,9 +203,9 @@ export default function TripCard({ trip }: TripCardProps) {
               <span className="font-medium">
                 {t("enRouteTo")}: {nextWaypoint?.location.custom_name || t("unknown")}
               </span>
-              {nextWaypoint?.remaining_time && (
+              {(nextWaypoint?.remaining_time || trip.remaining_time_to_destination) && (
                 <span className="ml-2 text-xs text-muted-foreground">
-                  {formatRemainingTime(nextWaypoint.remaining_time)} • {formatDistance(nextWaypoint.remaining_distance ?? null)} {t("remaining")}
+                  {formatRemainingTime((nextWaypoint?.remaining_time || trip.remaining_time_to_destination) ?? null)} • {formatDistance((nextWaypoint?.remaining_distance || trip.remaining_distance_to_destination) ?? null)} {t("remaining")}
                 </span>
               )}
             </div>
@@ -224,6 +224,11 @@ export default function TripCard({ trip }: TripCardProps) {
                     {wp.is_passed && <CheckCircle2 className="inline h-3 w-3 ml-1 text-green-700" />}
                     {wp.is_next && <span className="ml-1">({t("nextStop")})</span>}
                     {wp.price && wp.price > 0 && ` (${wp.price} RWF)`}
+                    {wp.remaining_time && !wp.is_passed && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {formatRemainingTime(wp.remaining_time)} • {formatDistance(wp.remaining_distance ?? null)}
+                      </div>
+                    )}
                   </Badge>
                 ))}
               </div>
