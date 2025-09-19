@@ -216,7 +216,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                 </span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {formatRemainingTime(nextStop.remaining_time ?? null)} • {formatDistance(nextStop.remaining_distance ?? null)} {t("remaining")}
+                {formatRemainingTime(nextStop.remaining_time ?? trip.remaining_time_to_destination ?? null)} • {formatDistance(nextStop.remaining_distance ?? trip.remaining_distance_to_destination ?? null)} {t("remaining")}
               </div>
             </div>
           )}
@@ -345,8 +345,8 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                   ? trip.departure_time
                     ? formatTime(trip.departure_time)
                     : t("timeTBD")
-                  : nextStop?.remaining_time 
-                    ? `${formatRemainingTime(nextStop.remaining_time ?? null)} to next stop`
+                  : nextStop?.remaining_time || trip.remaining_time_to_destination
+                    ? `${formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} to next stop`
                     : t("timeTBD")}
               </span>
             </div>

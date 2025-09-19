@@ -90,6 +90,32 @@ export function getAvailableOrigins(trip: Trip): TripWaypoint[] {
         location: trip.route.origin,
       } as TripWaypoint
       return [originWaypoint, ...waypointOrigins]
+    } else if (trip.status === "IN_PROGRESS") {
+      // For IN_PROGRESS city routes, return all unpassed waypoints including origin
+      const unpassedStops = trip.waypoints.filter((stop) => !stop.is_passed)
+      
+      // Check if origin is in waypoints, if not create virtual origin
+      const hasOrigin = unpassedStops.some((stop) => stop.location_id === trip.route.origin_id)
+      let origins = [...unpassedStops]
+      
+      if (!hasOrigin) {
+        const originWaypoint = {
+          id: `${trip.route.origin_id}`,
+          trip_id: trip.id,
+          location_id: trip.route.origin_id,
+          order: 0,
+          price: 0,
+          is_passed: false,
+          is_next: false,
+          is_custom: false,
+          created_at: trip.created_at,
+          updated_at: trip.updated_at,
+          location: trip.route.origin,
+        } as TripWaypoint
+        origins = [originWaypoint, ...unpassedStops]
+      }
+      
+      return origins.sort((a, b) => a.order - b.order)
     }
   } else {
     if (trip.status === "SCHEDULED") {
@@ -185,12 +211,43 @@ export function getEstimatedArrivalTime(trip: Trip, stopId: string): string | nu
   if (trip.status !== "IN_PROGRESS" || !trip.waypoints) return null
   const stop = trip.waypoints.find((s) => s.location.id === stopId)
   if (!stop || stop.is_passed) return null
-  // For demo: estimate based on order difference and a base time (no real-time location)
+  
+  // If waypoint has remaining_time, use it directly
+  if (stop.remaining_time && stop.remaining_time > 0) {
+    const hours = Math.floor(stop.remaining_time / 3600)
+    const minutes = Math.floor((stop.remaining_time % 3600) / 60)
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}hr ${minutes}min` : `${hours}hr`
+    } else {
+      return `${minutes}min`
+    }
+  }
+  
+  // Fallback: estimate based on order difference and trip-level remaining time
   const stopIndex = trip.waypoints.findIndex((s) => s.location.id === stopId)
   const nextStopIndex = trip.waypoints.findIndex((s) => s.is_next)
-  if (stopIndex === -1 || nextStopIndex === -1 || stopIndex <= nextStopIndex) return null
-  const baseMinutes = stop.remaining_time || 0
+  
+  if (stopIndex === -1 || nextStopIndex === -1) return null
+  
+  // Use trip-level remaining time as base if available
+  const baseTime = trip.remaining_time_to_destination || 0
+  const totalStops = trip.waypoints.length
+  const stopsRemaining = totalStops - stopIndex
+  
+  if (baseTime > 0 && stopsRemaining > 0) {
+    const estimatedSeconds = Math.round(baseTime * (stopsRemaining / totalStops))
+    const hours = Math.floor(estimatedSeconds / 3600)
+    const minutes = Math.floor((estimatedSeconds % 3600) / 60)
+    
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}hr ${minutes}min` : `${hours}hr`
+    } else {
+      return `${minutes}min`
+    }
+  }
+  
+  // Final fallback: simple estimation
   const additionalStops = stopIndex - nextStopIndex
-  const estimatedMinutes = baseMinutes + additionalStops * 15
-  return `${estimatedMinutes} min`
+  const estimatedMinutes = additionalStops * 15
+  return estimatedMinutes > 0 ? `${estimatedMinutes} min` : null
 }
