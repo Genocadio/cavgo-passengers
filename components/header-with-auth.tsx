@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Bus, User, LogOut, Ticket } from "lucide-react"
+import { User, LogOut, Ticket } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import AuthModal from "./auth-modal"
@@ -22,8 +23,14 @@ export default function HeaderWithAuth() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="bg-green-600 p-2 rounded-lg">
-                <Bus className="h-6 w-6 text-white" />
+              <div className="relative w-10 h-10">
+                <Image 
+                  src="/logo.webp" 
+                  alt="Cavgo Logo" 
+                  width={40} 
+                  height={40}
+                  className="rounded-lg object-contain"
+                />
               </div>
               <div className="hidden md:block">
                 <h1 className="text-2xl font-bold text-gray-900">{t("appName")}</h1>

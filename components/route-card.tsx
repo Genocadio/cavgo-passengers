@@ -193,10 +193,6 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
               </div>
             </div>
             <div className="flex gap-2">
-              {/* Status badge: hide on xs, show on sm+ */}
-              <Badge className={`${getStatusColor(trip.status)} text-white hidden md:inline-flex`}>
-                {trip.status}
-              </Badge>
               {/* City/Province badge: hide on xs and sm, show on md+ */}
               <Badge className={`${getRouteTypeColor(trip.route.city_route)} text-white hidden md:inline-flex`}>
                 {trip.route.city_route ? "city" : "province"}
@@ -206,82 +202,26 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Route Progress for Departed Routes */}
-          {trip.status === "IN_PROGRESS" && nextStop && (
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="flex items-center gap-2 text-sm">
-                <Navigation className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">
-                  {t("enRouteTo")} {nextStop.location.custom_name}
-                </span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {formatRemainingTime(nextStop.remaining_time ?? trip.remaining_time_to_destination ?? null)} • {formatDistance(nextStop.remaining_distance ?? trip.remaining_distance_to_destination ?? null)} {t("remaining")}
-              </div>
+          {/* Time Display Section - Unified for both SCHEDULED and IN_PROGRESS */}
+          <div className="bg-green-50 p-3 rounded-lg">
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4 text-green-600" />
+              <span className="font-medium">
+                {trip.status === "SCHEDULED" ? (
+                  <>
+                    {t("departure")}: {formatTime(trip.departure_time)}
+                  </>
+                ) : (
+                  <>
+                    {t("remaining")}: {formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} • {formatDistance(nextStop?.remaining_distance ?? trip.remaining_distance_to_destination ?? null)}
+                  </>
+                )}
+              </span>
             </div>
-          )}
+          </div>
 
-          {/* Departure Time for Scheduled Routes */}
-          {trip.status === "SCHEDULED" && trip.departure_time && (
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-green-600" />
-                <span className="font-medium">
-                  {t("departure")}: {formatTime(trip.departure_time)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Upcoming Stops with Estimated Times for Departed Routes */}
-          {trip.status === "IN_PROGRESS" && upcomingStops.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Upcoming Stops
-              </h4>
-              <div className="space-y-1">
-                {upcomingStops
-                  .map((stop, index) => {
-                    const estimatedTime = stop.remaining_time || getEstimatedArrivalTime(trip, stop.id)
-                    const isBookable = availableOrigins.some((origin) => origin.id=== stop.id)
-                    const isAllowedSoon = allowedSoonStops.some((allowedStop) => allowedStop.id === stop.id)
-
-                    return (
-                      <div key={index} className="flex justify-between items-center text-sm p-2 bg-gray-50 rounded">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`font-medium ${isBookable ? "text-green-600" : isAllowedSoon ? "text-amber-600" : "text-gray-600"}`}
-                          >
-                            {stop.location.custom_name}
-                          </span>
-                          {isBookable && (
-                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                              Bookable
-                            </Badge>
-                          )}
-                          {isAllowedSoon && (
-                            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
-                              Soon
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-muted-foreground">
-                          {estimatedTime
-                            ? typeof estimatedTime === 'number'
-                              ? `~${formatRemainingTime(estimatedTime)}`
-                              : `~${estimatedTime}`
-                            : "Calculating..."}
-                        </span>
-                      </div>
-                    )
-                  })}
-              </div>
-            </div>
-          )}
-
-          {/* All Stops for Scheduled Routes */}
-          {trip.status === "SCHEDULED" && trip.waypoints && trip.waypoints.length > 0 && (
+          {/* Route Stops - Unified for both SCHEDULED and IN_PROGRESS */}
+          {trip.waypoints && trip.waypoints.length > 0 && (
             <div className="space-y-2">
               <h4 className="font-medium text-sm">{t("routeStops")}</h4>
               <div className="flex flex-wrap gap-1">
@@ -295,7 +235,6 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                       key={(stop as any).id ?? `${stopName}-${index}`}
                       variant={stop.is_passed? "secondary" : "outline"}
                       className={`text-xs
-                        ${false ? "bg-blue-600 text-white border-blue-600" : ""}
                         ${isNext ? "bg-amber-100 text-amber-800 border-amber-200" : ""}
                         ${stop.is_passed ? "opacity-60" : ""}
                       `}
@@ -306,19 +245,11 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                         : highlightDestination
                         ? highlightFullFieldMatch(stopName, searchFilters?.destination)
                         : stopName}
-                      {false && <span className="ml-1">({t("currentLocation")})</span>}
                       {isNext && <span className="ml-1">({t("nextStop")})</span>}
                       {typeof stop.price === "number" && stop.price > 0 && ` (${stop.price} RWF)`}
                     </Badge>
                   )
                 })}
-              </div>
-              {/* Show departure time for scheduled route */}
-              <div className="flex items-center gap-2 mt-2 text-sm">
-                {/* <Clock className="h-4 w-4 text-green-600" /> */}
-                {/* <span className="font-medium">
-                  {t("departure")}: {trip.waypoints[0]?.remaining_time ? formatTime(trip.waypoints[0].remaining_time) : t("timeTBD")}
-                </span> */}
               </div>
               {/* Show next stop info if available */}
               {nextStop && (
@@ -346,7 +277,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                     ? formatTime(trip.departure_time)
                     : t("timeTBD")
                   : nextStop?.remaining_time || trip.remaining_time_to_destination
-                    ? `${formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} to next stop`
+                    ? `${formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} ${t("remaining")}`
                     : t("timeTBD")}
               </span>
             </div>
