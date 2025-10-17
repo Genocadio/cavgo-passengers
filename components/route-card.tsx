@@ -296,23 +296,11 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
           )}
 
           {/* Route Info */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="text-sm">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span>
                {t("seatsAvailable")}  {trip.seats} 
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {trip.status === "SCHEDULED"
-                  ? trip.departure_time
-                    ? formatTime(trip.departure_time)
-                    : t("timeTBD")
-                  : nextStop?.remaining_time || trip.remaining_time_to_destination
-                    ? `${formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} ${t("remaining")}`
-                    : t("timeTBD")}
               </span>
             </div>
           </div>
