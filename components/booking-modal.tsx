@@ -266,6 +266,243 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
     return 0;
   }
 
+  if (showConfirmation && pendingBooking) {
+    // Helper to get stop name by id
+    function getStopNameById(stopId: string) {
+      if (!stopId) return "";
+      if (trip.route.origin.id.toString() === stopId.toString()) return trip.route.origin.custom_name || t("origin");
+      if (trip.route.destination.id.toString() === stopId.toString()) return trip.route.destination.custom_name || t("destination");
+      const wp = trip.waypoints.find(wp => wp.location.id.toString() === stopId.toString());
+      return wp?.location.custom_name || t("stop");
+    }
+    const confirmFromName = getStopNameById(pendingBooking.fromStopId!);
+    const confirmToName = getStopNameById(pendingBooking.toStopId!);
+    const companyName = trip.vehicle.company_name;
+
+    // Departure time logic
+    let pickupTimeDisplay = null;
+    if (pendingBooking.fromStopId?.toString() === trip.route.origin.id.toString()) {
+      // Origin: use trip.departure_time
+      const dt = new Date(trip.departure_time * 1000);
+      pickupTimeDisplay = `${t("departureTime")}: ${dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      // Waypoint: find waypoint
+      const wp = trip.waypoints.find(wp => wp.location.id.toString() === pendingBooking.fromStopId?.toString());
+      if (wp) {
+        if (typeof wp.remaining_time === 'number' && wp.remaining_time !== null) {
+          const now = new Date();
+          const eta = new Date(now.getTime() + wp.remaining_time * 1000);
+          pickupTimeDisplay = `${t("estimatedPickupTime")}: ${eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        } else if (trip.status === 'SCHEDULED') {
+          pickupTimeDisplay = t("notifyWhenCarCloseToPickup");
+        }
+      }
+    }
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("confirmBooking")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center py-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="font-semibold">{t("pleaseConfirmBookingDetails")}</h3>
+            </div>
+            <Card>
+              <CardContent className="pt-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>{t("company")}</span>
+                  <span className="font-medium">{companyName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{t("trip")}</span>
+                  <span className="font-medium">
+                    {confirmFromName} → {confirmToName}
+                  </span>
+                </div>
+                {pickupTimeDisplay && (
+                  <div className="flex justify-between">
+                    <span>{t("pickupTime")}</span>
+                    <span className="font-medium">{pickupTimeDisplay}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span>Car Plate:</span>
+                  <span className="font-medium">{trip.vehicle.license_plate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{t("seats")}:</span>
+                  <span className="font-medium">{pendingBooking.seats}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{t("totalLabel")}</span>
+                  <span className="font-medium text-green-600">{getSegmentPrice(trip, pendingBooking.fromStopId!, pendingBooking.toStopId!) * pendingBooking.seats!} RWF</span>
+                </div>
+              </CardContent>
+            </Card>
+            <div className="flex gap-3 pt-4 items-center justify-between">
+              <Button onClick={handleClose} variant="outline" className="flex-1 max-w-[120px]">
+                {t("cancel")}
+              </Button>
+              <Button onClick={handleConfirmBooking} disabled={isSubmitting} className="bg-green-600 hover:bg-green-700 flex-1">
+                {isSubmitting ? t("processing") : t("confirmAndBook")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  if (showSuccess && createdBooking) {
+    // PDF styles for POS/receipt
+    const pdfStyles = StyleSheet.create({
+      page: {
+        padding: 8,
+        width: 210, // ~58mm in points
+        minHeight: 350,
+        flexDirection: 'column',
+        backgroundColor: '#fff',
+      },
+      ticket: {
+        marginBottom: 8,
+        padding: 8,
+        borderBottom: '1px dashed #888',
+        fontSize: 12,
+      },
+      title: { fontSize: 16, marginBottom: 8, fontWeight: 'bold', textAlign: 'center' },
+      label: { fontWeight: 'bold' },
+      value: { marginLeft: 2 },
+      qr: { width: 80, height: 80, alignSelf: 'center', marginVertical: 8 },
+      sep: { borderBottom: '1px dashed #888', marginVertical: 4 },
+    });
+
+    // PDF Document component
+    const TicketsPDF = ({ tickets, qrCodes }: { tickets: any[]; qrCodes: string[] }) => (
+      <Document>
+        {tickets.map((ticket, idx) => (
+          <Page key={ticket.id || idx} size={{ width: 210, height: 350 }} style={pdfStyles.page}>
+            <View style={pdfStyles.ticket}>
+              <Text style={pdfStyles.title}>Ticket #{ticket.ticket_number}</Text>
+              <Text><Text style={pdfStyles.label}>Pickup:</Text> <Text style={pdfStyles.value}>{ticket.pickup_location_name}</Text></Text>
+              <Text><Text style={pdfStyles.label}>Dropoff:</Text> <Text style={pdfStyles.value}>{ticket.dropoff_location_name}</Text></Text>
+              <Text><Text style={pdfStyles.label}>Car Plate:</Text> <Text style={pdfStyles.value}>{ticket.car_plate}</Text></Text>
+              <Text><Text style={pdfStyles.label}>Pickup Time:</Text> <Text style={pdfStyles.value}>{ticket.pickup_time ? new Date(ticket.pickup_time).toLocaleString() : "-"}</Text></Text>
+              <View style={pdfStyles.qr}>
+                {qrCodes[idx] && <PDFImage src={qrCodes[idx]} style={pdfStyles.qr} />}
+              </View>
+            </View>
+          </Page>
+        ))}
+      </Document>
+    );
+
+    // Only show tickets if payment is COMPLETED
+    const isPaid = createdBooking.payment?.status === "COMPLETED";
+
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className={isPaid ? "text-green-600" : "text-amber-600"}>
+              {isPaid ? t("bookingConfirmed") : t("paymentPending")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center py-4">
+              <div className={`w-16 h-16 ${isPaid ? "bg-green-100" : "bg-amber-100"} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                <CreditCard className={`h-8 w-8 ${isPaid ? "text-green-600" : "text-amber-600"}`} />
+              </div>
+              <h3 className="font-semibold">
+                {isPaid ? t("bookingConfirmedMessage") : t("bookingPendingPaymentMessage")}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                {t("bookingReference")} {createdBooking.booking_reference}
+              </p>
+            </div>
+            {/* If not paid, show instructions instead of tickets */}
+            {!isPaid ? (
+              <div className="bg-amber-100 text-amber-900 p-3 rounded mb-2 text-sm flex flex-col items-center">
+                <span className="font-semibold mb-1">{t("paymentInstructionsTitle")}</span>
+                <span className="mb-2">{t("paymentInstructionsMessage")}</span>
+              </div>
+            ) : (
+              <>
+                {user == null && (
+                  <div className="bg-amber-100 text-amber-900 p-3 rounded mb-2 text-sm flex flex-col items-center">
+                    <span className="font-semibold mb-1">{t("pleaseSaveYourTickets")}</span>
+                    <span className="mb-2">{t("saveTicketsWarning")}</span>
+                    {pdfQRCodes.length === createdBooking.tickets.length && pdfQRCodes.every(Boolean) ? (
+                      <PDFDownloadLink
+                        document={<TicketsPDF tickets={createdBooking.tickets} qrCodes={pdfQRCodes} />}
+                        fileName="tickets.pdf"
+                      >
+                        {({ loading }) => (
+                          <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-2">
+                            {loading ? t("generatingPDF") : t("downloadTicketsPDF")}
+                          </Button>
+                        )}
+                      </PDFDownloadLink>
+                    ) : (
+                      <div className="text-xs text-gray-500">{t("generatingPDF")}</div>
+                    )}
+                  </div>
+                )}
+                <Card>
+                  <CardContent className="pt-4 space-y-2 text-sm">
+                    <div className="mb-2">
+                      <span className="font-semibold">{t("yourTickets")}</span>
+                      <ul className="divide-y divide-gray-200 mt-2">
+                        {createdBooking.tickets.map((ticket: any, idx: number) => (
+                          <li key={ticket.id} className="py-2">
+                            <div className="flex flex-col gap-1">
+                              <span><b>{t("ticketNumber")}:</b> {ticket.ticket_number}</span>
+                              <span><b>{t("pickup")}</b>: {ticket.pickup_location_name}</span>
+                              <span><b>{t("dropoff")}</b>: {ticket.dropoff_location_name}</span>
+                              <span><b>{t("carPlate")}</b>: {ticket.car_plate}</span>
+                              <span><b>{t("pickupTime")}</b>: {ticket.pickup_time ? new Date(ticket.pickup_time).toLocaleString() : "-"}</span>
+                              <span>
+                                <QRCode value={ticket.qr_code || ticket.ticket_number || ""} size={64} />
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t("trip")}</span>
+                      <span className="font-medium">
+                        {createdBooking.tickets[0]?.pickup_location_name} → {createdBooking.tickets[0]?.dropoff_location_name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Car Plate:</span>
+                      <span className="font-medium">{createdBooking.tickets[0]?.car_plate}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t("seats")}:</span>
+                      <span className="font-medium">{createdBooking.number_of_tickets}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t("totalLabel")}</span>
+                      <span className="font-medium text-green-600">{createdBooking.total_amount} RWF</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+            <Button onClick={handleClose} className="w-full">
+              {t("close")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   if (!isOpen) return null;
 
   return (
