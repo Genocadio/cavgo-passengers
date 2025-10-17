@@ -463,59 +463,68 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
 
                 {/* Passenger Information Section */}
                 <div className="border-t pt-3 mt-3">
-                  <h3 className="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <h3 className="text-md font-semibold text-gray-800 mb-4 flex items-center justify-center gap-2">
                     <User className="h-4 w-4 text-green-600" />
                     {t("passengerInformation")}
                   </h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="passengerName">{t("fullName")} *</Label>
-                    <div className="relative max-w-xs mx-auto w-full">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="passengerName"
-                        value={booking.passengerName}
-                        onChange={(e) => setBooking({ ...booking, passengerName: e.target.value })}
-                        placeholder={t("enterFullName")}
-                        className="pl-10"
-                        required
-                      />
+                  
+                  <div className="space-y-4">
+                    {/* Full Name Field */}
+                    <div className="space-y-2">
+                      <Label htmlFor="passengerName" className="text-center block font-medium">{t("fullName")} *</Label>
+                      <div className="relative max-w-sm mx-auto w-full">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="passengerName"
+                          value={booking.passengerName}
+                          onChange={(e) => setBooking({ ...booking, passengerName: e.target.value })}
+                          placeholder={t("enterFullName")}
+                          className="pl-10 text-center"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Phone number logic: only show passengerPhone if not logged in, else show paymentPhone */}
-                  {!user ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="passengerPhone">{t("phoneNumber")} *</Label>
-                      <div className="relative max-w-xs mx-auto w-full">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="passengerPhone"
-                          value={booking.passengerPhone}
-                          onChange={(e) => setBooking({ ...booking, passengerPhone: e.target.value })}
-                          placeholder="+250 xxx xxx xxx"
-                          className="pl-10"
-                          required
-                        />
+                    {/* Phone Number Field */}
+                    {!user ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="passengerPhone" className="text-center block font-medium">{t("phoneNumber")} *</Label>
+                        <div className="relative max-w-sm mx-auto w-full">
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="passengerPhone"
+                            value={booking.passengerPhone}
+                            onChange={(e) => setBooking({ ...booking, passengerPhone: e.target.value })}
+                            placeholder="+250 xxx xxx xxx"
+                            className="pl-10 text-center"
+                            required
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          This will be used for payments and notifications about the journey
+                        </p>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Label htmlFor="paymentPhone">{t("mobileMoneyNumber")} *</Label>
-                      <div className="relative max-w-xs mx-auto w-full">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="paymentPhone"
-                          value={paymentPhone}
-                          onChange={(e) => setPaymentPhone(e.target.value)}
-                          placeholder="+250 xxx xxx xxx"
-                          className="pl-10"
-                          required
-                        />
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="paymentPhone" className="text-center block font-medium">{t("phoneNumber")} *</Label>
+                        <div className="relative max-w-sm mx-auto w-full">
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="paymentPhone"
+                            value={paymentPhone}
+                            onChange={(e) => setPaymentPhone(e.target.value)}
+                            placeholder="+250 xxx xxx xxx"
+                            className="pl-10 text-center"
+                            required
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          This will be used for payments and notifications about the journey
+                        </p>
+                        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded text-center">{t("registeredPhoneNote")}</div>
                       </div>
-                      <p className="text-xs text-muted-foreground">{t("paymentPrompt")}</p>
-                      <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">{t("registeredPhoneNote")}</div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
