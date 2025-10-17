@@ -213,7 +213,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                   </>
                 ) : (
                   <>
-                    {t("remaining")}: {formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} • {formatDistance(nextStop?.remaining_distance ?? trip.remaining_distance_to_destination ?? null)}
+                    {t("remaining")}: {formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} • {formatDistance(nextStop?.remaining_distance ?? trip.remaining_distance_to_destination ?? null)} to next
                   </>
                 )}
               </span>
