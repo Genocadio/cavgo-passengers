@@ -226,8 +226,10 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
               <h4 className="font-medium text-sm">{t("routeStops")}</h4>
               <div className="flex flex-wrap gap-1">
                 {trip.status === "SCHEDULED" ? (
-                  // For scheduled trips, show all waypoints
-                  trip.waypoints?.map((stop, index) => {
+                  // For scheduled trips, show all waypoints sorted by order
+                  trip.waypoints
+                    ?.sort((a, b) => a.order - b.order)
+                    ?.map((stop, index) => {
                     const isNext = !stop.is_passed && stop.order === minUnpassedOrder;
                     const stopName = stop.location?.custom_name || '';
                     const highlightOrigin = !!searchFilters?.origin && stopName.toLowerCase().includes((searchFilters.origin || '').toLowerCase());
@@ -253,9 +255,10 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                     )
                   })
                 ) : (
-                  // For IN_PROGRESS trips, show only upcoming waypoints (not passed)
+                  // For IN_PROGRESS trips, show only upcoming waypoints (not passed) sorted by order
                   trip.waypoints
                     ?.filter((stop) => !stop.is_passed)
+                    ?.sort((a, b) => a.order - b.order)
                     ?.map((stop, index) => {
                       const isNext = stop.order === minUnpassedOrder;
                       const stopName = stop.location?.custom_name || '';
