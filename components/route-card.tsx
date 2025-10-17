@@ -220,36 +220,67 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
             </div>
           </div>
 
-          {/* Route Stops - Unified for both SCHEDULED and IN_PROGRESS */}
+          {/* Route Stops - Different display for SCHEDULED vs IN_PROGRESS */}
           {trip.waypoints && trip.waypoints.length > 0 && (
             <div className="space-y-2">
               <h4 className="font-medium text-sm">{t("routeStops")}</h4>
               <div className="flex flex-wrap gap-1">
-                {trip.waypoints?.map((stop, index) => {
-                  const isNext = !stop.is_passed && stop.order === minUnpassedOrder;
-                  const stopName = stop.location?.custom_name || '';
-                  const highlightOrigin = !!searchFilters?.origin && stopName.toLowerCase().includes((searchFilters.origin || '').toLowerCase());
-                  const highlightDestination = !!searchFilters?.destination && stopName.toLowerCase().includes((searchFilters.destination || '').toLowerCase());
-                  return (
-                    <Badge
-                      key={(stop as any).id ?? `${stopName}-${index}`}
-                      variant={stop.is_passed? "secondary" : "outline"}
-                      className={`text-xs
-                        ${isNext ? "bg-amber-100 text-amber-800 border-amber-200" : ""}
-                        ${stop.is_passed ? "opacity-60" : ""}
-                      `}
-                    >
-                      {/* Highlight full field in stop name if search matches */}
-                      {highlightOrigin
-                        ? highlightFullFieldMatch(stopName, searchFilters?.origin)
-                        : highlightDestination
-                        ? highlightFullFieldMatch(stopName, searchFilters?.destination)
-                        : stopName}
-                      {isNext && <span className="ml-1">({t("nextStop")})</span>}
-                      {typeof stop.price === "number" && stop.price > 0 && ` (${stop.price} RWF)`}
-                    </Badge>
-                  )
-                })}
+                {trip.status === "SCHEDULED" ? (
+                  // For scheduled trips, show all waypoints
+                  trip.waypoints?.map((stop, index) => {
+                    const isNext = !stop.is_passed && stop.order === minUnpassedOrder;
+                    const stopName = stop.location?.custom_name || '';
+                    const highlightOrigin = !!searchFilters?.origin && stopName.toLowerCase().includes((searchFilters.origin || '').toLowerCase());
+                    const highlightDestination = !!searchFilters?.destination && stopName.toLowerCase().includes((searchFilters.destination || '').toLowerCase());
+                    return (
+                      <Badge
+                        key={(stop as any).id ?? `${stopName}-${index}`}
+                        variant={stop.is_passed? "secondary" : "outline"}
+                        className={`text-xs
+                          ${isNext ? "bg-amber-100 text-amber-800 border-amber-200" : ""}
+                          ${stop.is_passed ? "opacity-60" : ""}
+                        `}
+                      >
+                        {/* Highlight full field in stop name if search matches */}
+                        {highlightOrigin
+                          ? highlightFullFieldMatch(stopName, searchFilters?.origin)
+                          : highlightDestination
+                          ? highlightFullFieldMatch(stopName, searchFilters?.destination)
+                          : stopName}
+                        {isNext && <span className="ml-1">({t("nextStop")})</span>}
+                        {typeof stop.price === "number" && stop.price > 0 && ` (${stop.price} RWF)`}
+                      </Badge>
+                    )
+                  })
+                ) : (
+                  // For IN_PROGRESS trips, show only upcoming waypoints (not passed)
+                  trip.waypoints
+                    ?.filter((stop) => !stop.is_passed)
+                    ?.map((stop, index) => {
+                      const isNext = stop.order === minUnpassedOrder;
+                      const stopName = stop.location?.custom_name || '';
+                      const highlightOrigin = !!searchFilters?.origin && stopName.toLowerCase().includes((searchFilters.origin || '').toLowerCase());
+                      const highlightDestination = !!searchFilters?.destination && stopName.toLowerCase().includes((searchFilters.destination || '').toLowerCase());
+                      return (
+                        <Badge
+                          key={(stop as any).id ?? `${stopName}-${index}`}
+                          variant="outline"
+                          className={`text-xs
+                            ${isNext ? "bg-amber-100 text-amber-800 border-amber-200" : ""}
+                          `}
+                        >
+                          {/* Highlight full field in stop name if search matches */}
+                          {highlightOrigin
+                            ? highlightFullFieldMatch(stopName, searchFilters?.origin)
+                            : highlightDestination
+                            ? highlightFullFieldMatch(stopName, searchFilters?.destination)
+                            : stopName}
+                          {isNext && <span className="ml-1">({t("nextStop")})</span>}
+                          {typeof stop.price === "number" && stop.price > 0 && ` (${stop.price} RWF)`}
+                        </Badge>
+                      )
+                    })
+                )}
               </div>
               {/* Show next stop info if available */}
               {nextStop && (
