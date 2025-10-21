@@ -196,7 +196,7 @@ export default function HomePage() {
                 </div>
               );
             })()
-          ) : trips.length === 0 ? (
+          ) : trips.filter((trip: Trip) => trip.status === "SCHEDULED" || trip.status === "IN_PROGRESS").length === 0 ? (
             <div className="text-center py-12">
               <Bus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">{t("noRoutesFound")}</h3>
@@ -229,21 +229,23 @@ export default function HomePage() {
           ) : (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {trips.map((trip: Trip) => (
-                  <RouteCard 
-                    key={trip.id} 
-                    trip={trip} 
-                    lastUpdate={tripUpdates.get(trip.id)}
-                    searchFilters={searchFilters}
-                  />
-                ))}
+                {trips
+                  .filter((trip: Trip) => trip.status === "SCHEDULED" || trip.status === "IN_PROGRESS")
+                  .map((trip: Trip) => (
+                    <RouteCard 
+                      key={trip.id} 
+                      trip={trip} 
+                      lastUpdate={tripUpdates.get(trip.id)}
+                      searchFilters={searchFilters}
+                    />
+                  ))}
               </div>
               <div ref={loadMoreRef} style={{ height: 1 }} />
               {/* Show a subtle loading indicator for pagination only if loading is slow */}
               {isFetchingNextPage && (
                 <DelayedLoadingIndicator delay={1000} text={t('loadingMore') || 'Loading more...'} />
               )}
-              {!hasNextPage && trips.length > 0 && (
+              {!hasNextPage && trips.filter((trip: Trip) => trip.status === "SCHEDULED" || trip.status === "IN_PROGRESS").length > 0 && (
                 <div className="text-center py-4 text-gray-400">{t('noMoreResults') || 'No more results.'}</div>
               )}
             </>

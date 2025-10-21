@@ -75,6 +75,38 @@ function formatDistance(meters: number | null) {
   }
 }
 
+// Calculate remaining time based on distance and speed (55km/h)
+function calculateTimeFromDistance(meters: number | null): number {
+  if (!meters || meters <= 0) return 0
+  const km = meters / 1000
+  const speedKmh = 55 // 55 km/h
+  const timeHours = km / speedKmh
+  return Math.round(timeHours * 3600) // Convert to seconds
+}
+
+// Format remaining time and distance with next waypoint name
+function formatRemainingTimeAndDistance(meters: number | null, nextWaypointName: string | null) {
+  if (!meters || meters <= 0) return ""
+  
+  const km = meters / 1000
+  const waypointName = nextWaypointName || "next stop"
+  
+  if (km >= 1) {
+    // Above 1km: show distance and calculated time
+    const calculatedTimeSeconds = calculateTimeFromDistance(meters)
+    const timeStr = formatRemainingTime(calculatedTimeSeconds)
+    return `${km.toFixed(1)}km remaining to ${waypointName}\n${timeStr} remaining to ${waypointName}`
+  } else if (meters >= 60) {
+    // Below 1km but above 60m: show calculated time
+    const calculatedTimeSeconds = calculateTimeFromDistance(meters)
+    const timeStr = formatRemainingTime(calculatedTimeSeconds)
+    return `${timeStr} remaining to ${waypointName}`
+  } else {
+    // Below 60m: arriving soon
+    return `Arriving soon at ${waypointName}`
+  }
+}
+
 // highlightWholeWordMatch: highlights the whole word if search is a substring (case-insensitive)
 function highlightWholeWordMatch(text: string, search: string | undefined) {
   if (!search || !text) return text;
@@ -212,9 +244,15 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                     {t("departure")}: {formatTime(trip.departure_time)}
                   </>
                 ) : (
-                  <>
-                    {t("remaining")}: {formatRemainingTime(nextStop?.remaining_time ?? trip.remaining_time_to_destination ?? null)} • {formatDistance(nextStop?.remaining_distance ?? trip.remaining_distance_to_destination ?? null)} to next
-                  </>
+                  <div className="text-center">
+                    <div className="font-medium">{t("remaining")}:</div>
+                    <div className="text-sm whitespace-pre-line">
+                      {formatRemainingTimeAndDistance(
+                        nextStop?.remaining_distance ?? trip.remaining_distance_to_destination ?? null,
+                        nextStop?.location.custom_name ?? null
+                      )}
+                    </div>
+                  </div>
                 )}
               </span>
             </div>
