@@ -241,17 +241,16 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                   <>
                     {t("departure")}: {formatTime(trip.departure_time)}
                   </>
-                ) : (
-                  <div className="text-center">
-                    <div className="font-medium">{t("remaining")}:</div>
-                    <div className="text-sm whitespace-pre-line">
-                      {formatRemainingTimeAndDistance(
-                        nextStop?.remaining_distance ?? trip.remaining_distance_to_destination ?? null,
-                        nextStop?.location.custom_name ?? null
-                      )}
-                    </div>
-                  </div>
-                )}
+         ) : (
+           <div className="text-center">
+             <div className="text-sm whitespace-pre-line">
+               {formatRemainingTimeAndDistance(
+                 nextStop?.remaining_distance ?? trip.remaining_distance_to_destination ?? null,
+                 nextStop?.location.custom_name ?? null
+               )}
+             </div>
+           </div>
+         )}
               </span>
             </div>
           </div>
