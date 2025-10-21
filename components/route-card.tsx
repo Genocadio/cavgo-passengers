@@ -91,13 +91,11 @@ function formatRemainingTimeAndDistance(meters: number | null, nextWaypointName:
   const km = meters / 1000
   const waypointName = nextWaypointName || "next stop"
   
-  if (km >= 1) {
-    // Above 1km: show distance and calculated time
-    const calculatedTimeSeconds = calculateTimeFromDistance(meters)
-    const timeStr = formatRemainingTime(calculatedTimeSeconds)
-    return `${km.toFixed(1)}km remaining to ${waypointName}\n${timeStr} remaining to ${waypointName}`
+  if (meters >= 500) {
+    // Above 500m: show only distance
+    return `${km.toFixed(1)}km remaining to ${waypointName}`
   } else if (meters >= 60) {
-    // Below 1km but above 60m: show calculated time
+    // Below 500m but above 60m: show calculated time
     const calculatedTimeSeconds = calculateTimeFromDistance(meters)
     const timeStr = formatRemainingTime(calculatedTimeSeconds)
     return `${timeStr} remaining to ${waypointName}`
