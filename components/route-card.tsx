@@ -91,17 +91,20 @@ function formatRemainingTimeAndDistance(meters: number | null, nextWaypointName:
   const km = meters / 1000
   const waypointName = nextWaypointName || "next stop"
   
-  if (meters >= 500) {
-    // Above 500m: show only distance
+  // Calculate time first to check if it's less than 5 minutes
+  const calculatedTimeSeconds = calculateTimeFromDistance(meters)
+  const calculatedMinutes = Math.round(calculatedTimeSeconds / 60)
+  
+  if (calculatedMinutes < 5) {
+    // Less than 5 minutes: show arriving soon regardless of distance
+    return `Arriving soon at ${waypointName}`
+  } else if (meters >= 500) {
+    // Above 500m and more than 5 minutes: show only distance
     return `${km.toFixed(1)}km remaining to ${waypointName}`
-  } else if (meters >= 60) {
-    // Below 500m but above 60m: show calculated time
-    const calculatedTimeSeconds = calculateTimeFromDistance(meters)
+  } else {
+    // Below 500m but more than 5 minutes: show calculated time
     const timeStr = formatRemainingTime(calculatedTimeSeconds)
     return `${timeStr} remaining to ${waypointName}`
-  } else {
-    // Below 60m: arriving soon
-    return `Arriving soon at ${waypointName}`
   }
 }
 
@@ -154,7 +157,30 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
   const availableOrigins = getAvailableOrigins(trip)
   const upcomingStops = getUpcomingStops(trip)
   const allowedSoonStops = getAllowedSoonStops(trip)
-  const nextStop = upcomingStops.filter((stop) => stop.is_next)[0]
+  
+  // Better logic to find the actual next waypoint
+  const getNextWaypoint = (trip: Trip) => {
+    if (trip.status !== "IN_PROGRESS" || !trip.waypoints) return null
+    
+    // Find the first unpassed waypoint (sorted by order)
+    const unpassedWaypoints = trip.waypoints
+      .filter(wp => !wp.is_passed)
+      .sort((a, b) => a.order - b.order)
+    
+    if (unpassedWaypoints.length === 0) {
+      // No more waypoints, next is destination
+      return {
+        location: trip.route.destination,
+        remaining_distance: trip.remaining_distance_to_destination,
+        is_next: true
+      }
+    }
+    
+    // Return the first unpassed waypoint
+    return unpassedWaypoints[0]
+  }
+  
+  const nextStop = getNextWaypoint(trip)
   const unpassedOrders = trip.waypoints?.filter(wp => !wp.is_passed).map(wp => wp.order) || [];
   const minUnpassedOrder = unpassedOrders.length > 0 ? Math.min(...unpassedOrders) : 0;
 
@@ -295,7 +321,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
                     ?.filter((stop) => !stop.is_passed)
                     ?.sort((a, b) => a.order - b.order)
                     ?.map((stop, index) => {
-                      const isNext = stop.order === minUnpassedOrder;
+                      const isNext = nextStop && stop.location.id === nextStop.location.id;
                       const stopName = stop.location?.custom_name || '';
                       const highlightOrigin = !!searchFilters?.origin && stopName.toLowerCase().includes((searchFilters.origin || '').toLowerCase());
                       const highlightDestination = !!searchFilters?.destination && stopName.toLowerCase().includes((searchFilters.destination || '').toLowerCase());
@@ -349,7 +375,8 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
               <div>canBook: {String(canBook)}</div>
               <div>availableSeats: {trip.seats}</div>
               <div>waypoints: {trip.waypoints ? trip.waypoints.length : 'undefined'}</div>
-              <div>nextStop: {nextStop ? 'defined' : 'undefined'}</div>
+              <div>nextStop: {nextStop ? `${nextStop.location.custom_name} (${nextStop.remaining_distance}m)` : 'undefined'}</div>
+              <div>unpassedWaypoints: {trip.waypoints?.filter(wp => !wp.is_passed).map(wp => wp.location.custom_name).join(', ')}</div>
             </div>
           )}
 
