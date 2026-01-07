@@ -688,7 +688,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                         const total = segPrice * booking.seats;
                         return (
                           <span className="font-semibold text-green-700 text-lg">
-                            {t("totalLabel")}: {total} RWF
+                            {t("totalLabel")} {total} RWF
                           </span>
                         );
                       })()
