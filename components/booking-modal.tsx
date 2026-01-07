@@ -673,7 +673,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: Math.min(trip.seats, 4) }, (_, i) => (
+                        {Array.from({ length: Math.min(Math.max(trip.remaining_seats ?? trip.seats ?? 0, 0), 4) }, (_, i) => (
                           <SelectItem key={i + 1} value={(i + 1).toString()}>
                             {i === 0 ? t("seat") : t("seats")} {i + 1}
                           </SelectItem>

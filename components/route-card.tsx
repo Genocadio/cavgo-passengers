@@ -157,6 +157,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
   const availableOrigins = getAvailableOrigins(trip)
   const upcomingStops = getUpcomingStops(trip)
   const allowedSoonStops = getAllowedSoonStops(trip)
+  const availableSeats = Math.max(trip.remaining_seats ?? trip.seats ?? 0, 0)
   
   // Better logic to find the actual next waypoint
   const getNextWaypoint = (trip: Trip) => {
@@ -220,7 +221,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
     })
   }
 
-  const canBook = availableDestinations.length > 0 && availableOrigins.length > 0 && trip.seats > 0
+  const canBook = availableDestinations.length > 0 && availableOrigins.length > 0 && availableSeats > 0
 
   return (
     <>
@@ -361,7 +362,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span>
-               {t("seatsAvailable")}  {trip.seats} 
+               {t("seatsAvailable")}  {availableSeats} 
               </span>
             </div>
           </div>
@@ -373,7 +374,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
               <div>availableOrigins: {JSON.stringify(availableOrigins.map(o => o.location?.custom_name || 'Unknown'))}</div>
               <div>availableDestinations: {JSON.stringify(availableDestinations.map(d => d.location?.custom_name || 'Unknown'))}</div>
               <div>canBook: {String(canBook)}</div>
-              <div>availableSeats: {trip.seats}</div>
+              <div>availableSeats: {availableSeats}</div>
               <div>waypoints: {trip.waypoints ? trip.waypoints.length : 'undefined'}</div>
               <div>nextStop: {nextStop ? `${nextStop.location.custom_name} (${nextStop.remaining_distance}m)` : 'undefined'}</div>
               <div>unpassedWaypoints: {trip.waypoints?.filter(wp => !wp.is_passed).map(wp => wp.location.custom_name).join(', ')}</div>

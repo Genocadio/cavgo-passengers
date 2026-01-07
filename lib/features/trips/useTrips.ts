@@ -74,6 +74,7 @@ export interface Trip {
   connection_mode: 'ONLINE' | 'OFFLINE' | 'HYBRID';
   notes?: string | null;
   seats: number;
+  remaining_seats: number;
   remaining_time_to_destination?: number | null;
   remaining_distance_to_destination?: number | null;
   is_reversed: boolean;

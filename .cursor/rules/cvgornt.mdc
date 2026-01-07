@@ -1,7 +1,0 @@
----
-description:
-globs:
-alwaysApply: true
----
-
-use react query and redux for state management prefer hooks and reusable parts for this

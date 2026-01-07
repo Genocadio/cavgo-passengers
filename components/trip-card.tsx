@@ -63,6 +63,7 @@ interface Trip {
   connection_mode: 'ONLINE' | 'OFFLINE' | 'HYBRID';
   notes?: string | null;
   seats: number;
+  remaining_seats: number;
   remaining_time_to_destination?: number | null;
   remaining_distance_to_destination?: number | null;
   is_reversed: boolean;
@@ -89,6 +90,7 @@ export default function TripCard({ trip }: TripCardProps) {
   const origin = sortedWaypoints[0]
   const nextWaypoint = sortedWaypoints.find(wp => !wp.is_passed)
   const lastPassed = [...sortedWaypoints].reverse().find(wp => wp.is_passed)
+  const availableSeats = trip.remaining_seats ?? trip.seats
 
   // Format time utility
   const formatTime = (unix: number | string | null) => {
@@ -249,7 +251,7 @@ export default function TripCard({ trip }: TripCardProps) {
         )}
         {/* Seats info */}
         <div className="flex items-center gap-2 text-sm">
-          <span>{t("seatsAvailable")}: {trip.seats}</span>
+          <span>{t("seatsAvailable")}: {availableSeats}</span>
         </div>
         {/* Toggle details button */}
         <div className="flex justify-end items-center pt-2 border-t">

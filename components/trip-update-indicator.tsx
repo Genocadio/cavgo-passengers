@@ -28,9 +28,9 @@ export function TripUpdateIndicator({ trip, lastUpdate }: TripUpdateIndicatorPro
 
     switch (lastUpdate.type) {
       case 'seats_reduced':
-        return `Seats reduced to ${trip.seats}`
+        return `Seats reduced to ${trip.remaining_seats ?? trip.seats}`
       case 'seats_restored':
-        return `Seats restored to ${trip.seats}`
+        return `Seats restored to ${trip.remaining_seats ?? trip.seats}`
       case 'started':
         return 'Trip started'
       case 'completed':

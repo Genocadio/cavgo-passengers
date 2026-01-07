@@ -201,7 +201,8 @@ export function isBookingAllowed(trip: Trip, fromStopId: string, toStopId: strin
   if (!validDestination) {
     return { allowed: false, reason: 'Invalid destination selected' }
   }
-  if (trip.seats <= 0) {
+  const availableSeats = trip.remaining_seats ?? trip.seats ?? 0
+  if (availableSeats <= 0) {
     return { allowed: false, reason: 'No seats available' }
   }
   return { allowed: true }
