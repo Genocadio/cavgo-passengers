@@ -75,6 +75,38 @@ export function useTripSubscription(sseUuid: string | null) {
     )
   }, [queryClient])
 
+  const removeTripFromCache = useCallback((tripId: number) => {
+    queryClient.setQueriesData(
+      { queryKey: ['trips'] },
+      (oldData: any) => {
+        if (!oldData) return oldData
+
+        let totalRemoved = 0
+        const updatedPages = oldData.pages.map((page: any) => {
+          const before = page.trips.length
+          const filteredTrips = page.trips.filter((trip: Trip) => trip.id !== tripId)
+          totalRemoved += before - filteredTrips.length
+          return {
+            ...page,
+            trips: filteredTrips,
+          }
+        })
+
+        if (totalRemoved === 0) return oldData
+
+        const pagesWithTotals = updatedPages.map((page: any) => ({
+          ...page,
+          total: Math.max((page.total ?? 0) - totalRemoved, 0)
+        }))
+
+        return {
+          ...oldData,
+          pages: pagesWithTotals
+        }
+      }
+    )
+  }, [queryClient])
+
   const handleSSEEvent = useCallback((event: MessageEvent) => {
     try {
       // Validate that we have event data
@@ -175,6 +207,10 @@ export function useTripSubscription(sseUuid: string | null) {
           updateTripInCache(tripData)
           break
 
+        case 'cancelled':
+          removeTripFromCache(tripData.id)
+          break
+
         default:
           console.warn(`Unknown SSE event type: ${eventType}`)
       }
@@ -232,7 +268,7 @@ export function useTripSubscription(sseUuid: string | null) {
       connect(sseUrl)
 
       // Add specific event listeners
-      const eventTypes = ['connected', 'heartbeat', 'created', 'updated', 'started', 'completed', 'seats_reduced', 'seats_restored', 'waypoint_passed']
+      const eventTypes = ['connected', 'heartbeat', 'created', 'updated', 'started', 'completed', 'seats_reduced', 'seats_restored', 'waypoint_passed', 'cancelled']
       
       eventTypes.forEach(eventType => {
         addEventListener(eventType, handleSSEEvent)

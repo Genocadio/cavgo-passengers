@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useRef } from "react"
 import { Bus } from "lucide-react"
 import RouteSearch, { type SearchFilters } from "@/components/route-search"
-import TripCard from "@/components/trip-card"
 import { companies } from "@/lib/data"
 import { Badge } from "@/components/ui/badge"
 import HeaderWithAuth from "@/components/header-with-auth"

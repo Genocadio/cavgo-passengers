@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Clock, Users, Bus, Navigation, Building2, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -158,6 +158,12 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
   const upcomingStops = getUpcomingStops(trip)
   const allowedSoonStops = getAllowedSoonStops(trip)
   const availableSeats = Math.max(trip.remaining_seats ?? trip.seats ?? 0, 0)
+
+  useEffect(() => {
+    if (lastUpdate?.type === 'cancelled') {
+      setShowBookingModal(false)
+    }
+  }, [lastUpdate])
   
   // Better logic to find the actual next waypoint
   const getNextWaypoint = (trip: Trip) => {
@@ -266,7 +272,7 @@ export default function RouteCard({ trip, lastUpdate, searchFilters }: RouteCard
               <span className="font-medium">
                 {trip.status === "SCHEDULED" ? (
                   <>
-                    {t("departure")}: {formatTime(trip.departure_time)}
+                    {t("departure")} {formatTime(trip.departure_time)}
                   </>
          ) : (
            <div className="text-center">

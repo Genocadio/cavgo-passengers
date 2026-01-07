@@ -68,7 +68,7 @@ export interface Trip {
   route_id: number;
   vehicle_id: number;
   vehicle: Vehicle;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'NOT_COMPLETED';
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'NOT_COMPLETED' | 'CANCELLED';
   departure_time: number;
   completion_time?: number | null;
   connection_mode: 'ONLINE' | 'OFFLINE' | 'HYBRID';

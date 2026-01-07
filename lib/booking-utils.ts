@@ -75,7 +75,7 @@ export function getAvailableOrigins(trip: Trip): TripWaypoint[] {
   if (trip.route.city_route) {
     if(trip.status == "SCHEDULED") {
       const waypointOrigins = trip.waypoints.filter((stop) => !stop.is_passed && stop.location_id !== finalDestination)
-      // Add origin as the first option for city routes
+      // Add origin as the first option for city routes only when scheduled
       const originWaypoint = {
         id: `${trip.route.origin_id}`,
         trip_id: trip.id,
@@ -91,31 +91,9 @@ export function getAvailableOrigins(trip: Trip): TripWaypoint[] {
       } as TripWaypoint
       return [originWaypoint, ...waypointOrigins]
     } else if (trip.status === "IN_PROGRESS") {
-      // For IN_PROGRESS city routes, return all unpassed waypoints including origin
-      const unpassedStops = trip.waypoints.filter((stop) => !stop.is_passed)
-      
-      // Check if origin is in waypoints, if not create virtual origin
-      const hasOrigin = unpassedStops.some((stop) => stop.location_id === trip.route.origin_id)
-      let origins = [...unpassedStops]
-      
-      if (!hasOrigin) {
-        const originWaypoint = {
-          id: `${trip.route.origin_id}`,
-          trip_id: trip.id,
-          location_id: trip.route.origin_id,
-          order: 0,
-          price: 0,
-          is_passed: false,
-          is_next: false,
-          is_custom: false,
-          created_at: trip.created_at,
-          updated_at: trip.updated_at,
-          location: trip.route.origin,
-        } as TripWaypoint
-        origins = [originWaypoint, ...unpassedStops]
-      }
-      
-      return origins.sort((a, b) => a.order - b.order)
+      // For IN_PROGRESS city routes, return only unpassed waypoints (NOT origin)
+      const unpassedStops = trip.waypoints.filter((stop) => !stop.is_passed && stop.location_id !== trip.route.origin_id)
+      return unpassedStops.sort((a, b) => a.order - b.order)
     }
   } else {
     if (trip.status === "SCHEDULED") {

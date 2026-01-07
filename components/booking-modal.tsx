@@ -330,7 +330,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Car Plate:</span>
+                  <span>{t("carPlate")}:</span>
                   <span className="font-medium">{trip.vehicle.license_plate}</span>
                 </div>
                 <div className="flex justify-between">
@@ -479,7 +479,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Car Plate:</span>
+                      <span>{t("carPlate")}:</span>
                       <span className="font-medium">{createdBooking.tickets[0]?.car_plate}</span>
                     </div>
                     <div className="flex justify-between">
@@ -567,7 +567,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.custom_name}</span>
                                 <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                                  Available
+                                  {t("available")}
                                 </Badge>
                               </div>
                             </SelectItem>
@@ -595,7 +595,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                                   <span className="truncate break-words max-w-[120px] md:max-w-[180px]">{stop.location.custom_name}</span>
                                   {stop.price > 0 && <span className="text-muted-foreground">({stop.price} RWF)</span>}
                                   <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
-                                    Available
+                                    {t("available")}
                                   </Badge>
                                 </div>
                               </SelectItem>
@@ -732,13 +732,13 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                             id="passengerPhone"
                             value={booking.passengerPhone}
                             onChange={(e) => setBooking({ ...booking, passengerPhone: e.target.value })}
-                            placeholder="+250 xxx xxx xxx"
+                            placeholder={t("phonePlaceholder")}
                             className="pl-10 text-center"
                             required
                           />
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
-                          This will be used for payments and notifications about the journey
+                          {t("phoneUsageNote")}
                         </p>
                       </div>
                     ) : (
@@ -750,13 +750,13 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
                             id="paymentPhone"
                             value={paymentPhone}
                             onChange={(e) => setPaymentPhone(e.target.value)}
-                            placeholder="+250 xxx xxx xxx"
+                            placeholder={t("phonePlaceholder")}
                             className="pl-10 text-center"
                             required
                           />
                         </div>
                         <p className="text-xs text-muted-foreground text-center">
-                          This will be used for payments and notifications about the journey
+                          {t("phoneUsageNote")}
                         </p>
                         <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded text-center">{t("registeredPhoneNote")}</div>
                       </div>
