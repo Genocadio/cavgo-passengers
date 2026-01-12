@@ -277,7 +277,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
           bookingDate: new Date().toISOString(),
           paymentStatus: "pending",
           trip: trip,
-          carplate: trip.car?.plate_number || "",
+          carplate: trip.vehicle?.license_plate || "",
         }
         addTicket(ticket)
       }

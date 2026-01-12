@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Bus } from "lucide-react"
+import { Bus, Filter } from "lucide-react"
 import RouteSearch, { type SearchFilters } from "@/components/route-search"
 import { companies } from "@/lib/data"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import HeaderWithAuth from "@/components/header-with-auth"
 import { useLanguage } from "@/lib/language-context"
 // import TicketModal from "@/components/ticket-modal"
@@ -13,6 +14,7 @@ import { useTrips, Trip, TripWaypoint } from '@/lib/features/trips/useTrips'
 import { useTripSubscription } from '@/lib/features/trips/useTripSubscription'
 import RouteCard from "@/components/route-card"
 import { TripCardSkeleton } from "@/components/trip-card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 function DelayedLoadingIndicator({ delay = 1000, text }: { delay?: number, text: string }) {
   const [show, setShow] = useState(false)
@@ -27,6 +29,7 @@ function DelayedLoadingIndicator({ delay = 1000, text }: { delay?: number, text:
 export default function HomePage() {
   const { t } = useLanguage()
   const { currentTicket, setCurrentTicket } = useTickets()
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     origin: "",
     destination: "",
@@ -110,10 +113,27 @@ export default function HomePage() {
       <HeaderWithAuth />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {/* Search Section */}
-        <div className="mb-8">
-          <RouteSearch onSearch={setSearchFilters} />
-        </div>
+        {/* Floating Filter Button */}
+        <Button
+          onClick={() => setIsFilterOpen(true)}
+          className="fixed bottom-6 right-6 z-40 rounded-full shadow-lg h-14 w-14 p-0 flex items-center justify-center"
+          size="lg"
+        >
+          <Filter className="h-6 w-6" />
+        </Button>
+
+        {/* Filter Dialog */}
+        <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>{t("searchFilters") || "Search Filters"}</DialogTitle>
+            </DialogHeader>
+            <RouteSearch onSearch={(filters) => {
+              setSearchFilters(filters)
+              // Don't auto-close to allow multiple filter adjustments
+            }} />
+          </DialogContent>
+        </Dialog>
 
         {/* Real-time connection status */}
         {process.env.NODE_ENV === 'development' && status === 'success' && sseUuid && (
