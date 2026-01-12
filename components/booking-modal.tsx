@@ -59,6 +59,19 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
   const [paymentPhone, setPaymentPhone] = useState(user?.phone || "")
   const createBooking = useCreateBooking()
 
+  // Update booking fields when user logs in
+  useEffect(() => {
+    if (user) {
+      setBooking((prev) => ({
+        ...prev,
+        passengerName: user.name || prev.passengerName,
+        passengerPhone: user.phone || prev.passengerPhone,
+        passengerEmail: user.email || prev.passengerEmail,
+      }))
+      setPaymentPhone(user.phone || "")
+    }
+  }, [user])
+
   // Place at the top level of BookingModal, after other hooks
   const [pdfQRCodes, setPdfQRCodes] = useState<string[]>([]);
   useEffect(() => {
@@ -73,6 +86,38 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
   const availableOrigins = getAvailableOrigins(trip)
   const availableDestinations = getAvailableDestinations(trip)
   const allowedSoonStops = getAllowedSoonStops(trip)
+
+  // Auto-select if only one origin available
+  useEffect(() => {
+    if (trip.route.city_route) {
+      const cityFromOptions = getCityRouteFromOptions();
+      if (cityFromOptions.length === 1 && !booking.fromStopId) {
+        setBooking((prev) => ({ ...prev, fromStopId: cityFromOptions[0].id.toString() }));
+      }
+    } else {
+      if (availableOrigins.length === 1 && !booking.fromStopId) {
+        setBooking((prev) => ({ ...prev, fromStopId: availableOrigins[0].location.id.toString() }));
+      }
+    }
+  }, [availableOrigins, trip.route.city_route]);
+
+  // Auto-select if only one destination available
+  useEffect(() => {
+    if (trip.route.city_route) {
+      const cityFromOptions = getCityRouteFromOptions();
+      const selectedFrom = cityFromOptions.find(opt => opt.id.toString() === booking.fromStopId?.toString());
+      if (selectedFrom && booking.fromStopId) {
+        const cityToOptions = getCityRouteToOptions(selectedFrom.order, booking.fromStopId.toString());
+        if (cityToOptions.length === 1 && !booking.toStopId) {
+          setBooking((prev) => ({ ...prev, toStopId: cityToOptions[0].id.toString() }));
+        }
+      }
+    } else {
+      if (availableDestinations.length === 1 && !booking.toStopId) {
+        setBooking((prev) => ({ ...prev, toStopId: availableDestinations[0].location.id.toString() }));
+      }
+    }
+  }, [availableDestinations, booking.fromStopId, trip.route.city_route]);
 
   const price = booking.fromStopId && booking.toStopId ? calculatePrice(trip, booking.fromStopId, booking.toStopId) : 0
 
