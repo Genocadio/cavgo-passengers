@@ -85,14 +85,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
   // Helper to build 'from' options for city routes
   function getCityRouteFromOptions() {
     if (!trip.route.city_route) return [];
-    // Origin as order 0
-    const originOption = {
-      id: trip.route.origin.id,
-      order: 0,
-      price: 0,
-      custom_name: trip.route.origin.custom_name || 'Origin',
-      type: 'origin',
-    };
+    
     // Unpassed waypoints
     const unpassedWaypoints = trip.waypoints
       .filter((wp) => !wp.is_passed)
@@ -103,7 +96,21 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
         custom_name: wp.location.custom_name || `Stop ${wp.order}`,
         type: 'waypoint',
       }));
-    return [originOption, ...unpassedWaypoints];
+    
+    // Only include origin if trip is SCHEDULED (not yet in progress)
+    if (trip.status === "SCHEDULED") {
+      const originOption = {
+        id: trip.route.origin.id,
+        order: 0,
+        price: 0,
+        custom_name: trip.route.origin.custom_name || 'Origin',
+        type: 'origin',
+      };
+      return [originOption, ...unpassedWaypoints];
+    }
+    
+    // For IN_PROGRESS trips, only return unpassed waypoints
+    return unpassedWaypoints;
   }
 
   // Helper to build 'to' options for city routes
