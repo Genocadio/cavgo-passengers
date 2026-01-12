@@ -278,7 +278,7 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                         <div className="text-sm text-muted-foreground">
                           {ticket.seats} {ticket.seats === 1 ? t("seat") : t("seats")} • {ticket.bookingReference}
                         </div>
-                        {ticket.paymentStatus === "pending" ? (
+                        {!user && ticket.paymentStatus === "pending" ? (
                           <Button
                             size="sm"
                             onClick={async () => {
@@ -295,11 +295,11 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                           >
                             {payBooking.status === 'pending' ? t("processing") : t("payNow")}
                           </Button>
-                        ) : (
+                        ) : !user ? (
                           <Button size="sm" onClick={() => handleViewTicket(ticket)}>
                             {t("viewTicket")}
                           </Button>
-                        )}
+                        ) : null}
                       </div>
                     </CardContent>
                   </Card>
