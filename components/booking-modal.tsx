@@ -263,7 +263,7 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
       // Save to local storage for guest users
       if (!user) {
         const ticket: Ticket = {
-          id: data.booking.booking_reference,
+          id: data.booking.id,
           bookingReference: data.booking.booking_reference,
           routeId: trip.route.id,
           fromStop: fromStopName || "",

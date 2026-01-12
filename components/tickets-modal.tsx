@@ -283,7 +283,7 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                             size="sm"
                             onClick={async () => {
                               try {
-                                await payBooking.mutateAsync(ticket.bookingReference)
+                                await payBooking.mutateAsync(ticket.id)
                                 toast.success(t("paymentSuccess"))
                                 // Update ticket status in local storage
                                 updateTicket(ticket.id, { paymentStatus: "paid" })
