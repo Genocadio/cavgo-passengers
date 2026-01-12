@@ -291,7 +291,7 @@ export default function HomePage() {
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 z-50 animate-in fade-in slide-in-from-bottom-4"
+          className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 z-50 animate-in fade-in slide-in-from-bottom-4"
           aria-label="Back to top"
         >
           <ArrowUp className="h-5 w-5" />
