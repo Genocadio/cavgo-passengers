@@ -102,4 +102,5 @@ export interface Ticket {
   paymentStatus: "paid" | "pending"
   trip: Trip
   carplate: string // Car's plate number
+  createdAt?: string // Timestamp when ticket was stored locally
 }

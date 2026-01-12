@@ -9,6 +9,7 @@ import AuthModal from "./auth-modal"
 import LanguageSelector from "./language-selector"
 import TicketsModal from "./tickets-modal"
 import { useLanguage } from "@/lib/language-context"
+import { useTickets } from "@/lib/ticket-storage"
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react"
 
 export default function HeaderWithAuth() {
@@ -16,6 +17,7 @@ export default function HeaderWithAuth() {
   const [showTicketsModal, setShowTicketsModal] = useState(false)
   const { user, logout } = useAuth()
   const { t } = useLanguage()
+  const { tickets } = useTickets()
 
   return (
     <>
@@ -92,10 +94,23 @@ export default function HeaderWithAuth() {
                   </Menu>
                 </div>
               ) : (
-                <Button onClick={() => setShowAuthModal(true)} className="flex items-center gap-2 w-9 p-0 justify-center sm:w-auto sm:p-2 sm:justify-start">
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t("signIn")}</span>
-                </Button>
+                <>
+                  {tickets.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTicketsModal(true)}
+                      className="flex items-center gap-2 w-9 p-0 justify-center sm:w-auto sm:p-2 sm:justify-start"
+                    >
+                      <Ticket className="h-4 w-4" />
+                      <span className="hidden sm:inline">{t("myTickets")}</span>
+                    </Button>
+                  )}
+                  <Button onClick={() => setShowAuthModal(true)} className="flex items-center gap-2 w-9 p-0 justify-center sm:w-auto sm:p-2 sm:justify-start">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t("signIn")}</span>
+                  </Button>
+                </>
               )}
             </div>
           </div>

@@ -259,6 +259,29 @@ export default function BookingModal({ trip, isOpen, onClose }: BookingModalProp
       }
       const data = await createBooking.mutateAsync(payload)
       setCreatedBooking(data.booking)
+      
+      // Save to local storage for guest users
+      if (!user) {
+        const ticket: Ticket = {
+          id: data.booking.booking_reference,
+          bookingReference: data.booking.booking_reference,
+          routeId: trip.route.id,
+          fromStop: fromStopName || "",
+          toStop: toStopName || "",
+          seats: pendingBooking.seats!,
+          passengerName: pendingBooking.passengerName!,
+          passengerPhone: pendingBooking.passengerPhone!,
+          passengerEmail: pendingBooking.passengerEmail,
+          paymentPhone: pendingBooking.passengerPhone!,
+          totalPrice: getSegmentPrice(trip, pendingBooking.fromStopId!, pendingBooking.toStopId!) * pendingBooking.seats!,
+          bookingDate: new Date().toISOString(),
+          paymentStatus: "pending",
+          trip: trip,
+          carplate: trip.car?.plate_number || "",
+        }
+        addTicket(ticket)
+      }
+      
       setShowConfirmation(false)
       setShowSuccess(true)
       toast.success(t("bookingConfirmed"), { description: `${t("bookingReference")}: ${data.booking.booking_reference}`, duration: 5000 })

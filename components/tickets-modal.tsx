@@ -25,7 +25,7 @@ interface TicketsModalProps {
 
 export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
   const { user } = useAuth()
-  const { tickets, setCurrentTicket } = useTickets()
+  const { tickets, setCurrentTicket, updateTicket } = useTickets()
   const { t } = useLanguage()
   const { data: bookings = [], isLoading, error, refetch } = useUserBookings(user?.id)
   const payBooking = usePayBooking()
@@ -33,9 +33,9 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
   // Add state to track expanded bookings
   const [expandedBooking, setExpandedBooking] = React.useState<string | null>(null)
 
-  // Generate QR codes for each booking's tickets
+  // Generate QR codes for each booking's tickets (for logged-in users)
   React.useEffect(() => {
-    if (!bookings || bookings.length === 0 || !isOpen) return
+    if (!user || !bookings || bookings.length === 0 || !isOpen) return
     Promise.all(
       bookings.map((booking) =>
         Promise.all(
@@ -45,14 +45,14 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
         )
       )
     ).then(setPdfQRCodes)
-  }, [bookings, isOpen])
+  }, [bookings, isOpen, user])
 
   // Reset QR codes when dialog closes
   React.useEffect(() => {
     if (!isOpen) setPdfQRCodes([])
   }, [isOpen])
 
-  // Refetch bookings every time the modal is opened
+  // Refetch bookings every time the modal is opened (for logged-in users)
   React.useEffect(() => {
     if (isOpen && user) {
       refetch()
@@ -257,6 +257,7 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                           </CardTitle>
                           {/* No company name for guest tickets */}
                           <p className="text-xs text-muted-foreground mt-1">Car Plate: {ticket.carplate}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t("bookingTime")}: {formatDate(ticket.bookingDate)}</p>
                         </div>
                         <Badge variant={ticket.paymentStatus === "paid" ? "default" : "secondary"}>
                           {t(ticket.paymentStatus)}
@@ -277,9 +278,28 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                         <div className="text-sm text-muted-foreground">
                           {ticket.seats} {ticket.seats === 1 ? t("seat") : t("seats")} • {ticket.bookingReference}
                         </div>
-                        <Button size="sm" onClick={() => handleViewTicket(ticket)}>
-                          {t("viewTicket")}
-                        </Button>
+                        {ticket.paymentStatus === "pending" ? (
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await payBooking.mutateAsync(ticket.bookingReference)
+                                toast.success(t("paymentSuccess"))
+                                // Update ticket status in local storage
+                                updateTicket(ticket.id, { paymentStatus: "paid" })
+                              } catch (err: any) {
+                                toast.error(t("paymentFailed"), { description: err.message })
+                              }
+                            }}
+                            disabled={payBooking.status === 'pending'}
+                          >
+                            {payBooking.status === 'pending' ? t("processing") : t("payNow")}
+                          </Button>
+                        ) : (
+                          <Button size="sm" onClick={() => handleViewTicket(ticket)}>
+                            {t("viewTicket")}
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

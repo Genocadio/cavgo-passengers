@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { companies } from "@/lib/data"
+import { useCompanies } from "@/lib/features/companies/useCompanies"
 import { useLanguage } from "@/lib/language-context"
 import Downshift from "downshift"
 
@@ -28,6 +28,7 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
   const [cityRoute, setCityRoute] = useState<boolean | null>(null)
   const [companyInput, setCompanyInput] = useState("")
   const downshiftId = useId()
+  const { data: companies = [], isLoading: companiesLoading } = useCompanies()
 
   const disableFilters = !!origin && !!destination;
 
@@ -63,18 +64,19 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
         <Downshift<typeof companies[0] | null>
           id={downshiftId}
           onChange={selection => {
-            setCompany(selection && "name" in selection ? selection.name : "")
-            setCompanyInput(selection && "name" in selection ? selection.name : "")
+            setCompany(selection && "companyName" in selection ? selection.companyName : "")
+            setCompanyInput(selection && "companyName" in selection ? selection.companyName : "")
           }}
-          itemToString={item => (item && "name" in item ? item.name : "")}
-          selectedItem={companies.find(c => c.name === company) || null}
+          itemToString={item => (item && "companyName" in item ? item.companyName : "")}
+          selectedItem={companies.find(c => c.companyName === company) || null}
           inputValue={companyInput}
           onInputValueChange={value => setCompanyInput(value)}
         >
           {({ getInputProps, getItemProps, getMenuProps, isOpen, highlightedIndex, getLabelProps, inputValue, openMenu }) => {
             const inputProps = getInputProps({
-              placeholder: `${t("companyPlaceholder")} (${t("selectCompany")})`,
-              className: "w-full"
+              placeholder: companiesLoading ? t("loading") : `${t("companyPlaceholder")} (${t("selectCompany")})`,
+              className: "w-full",
+              disabled: companiesLoading
             })
             const originalOnFocus = (inputProps as any).onFocus
             return (
@@ -109,7 +111,7 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
                       )}
                       {companies
                         .filter(companyItem =>
-                          !companyInput || companyItem.name.toLowerCase().includes(companyInput.toLowerCase())
+                          !companyInput || companyItem.companyName.toLowerCase().includes(companyInput.toLowerCase())
                         )
                         .map((companyItem, index) => (
                           <li
@@ -122,7 +124,7 @@ export default function RouteSearch({ onSearch }: { onSearch: (filters: SearchFi
                                 (highlightedIndex === index ? "bg-gray-100" : "")
                             })}
                           >
-                            {companyItem.name}
+                            {companyItem.companyName}
                           </li>
                         ))}
                     </>
