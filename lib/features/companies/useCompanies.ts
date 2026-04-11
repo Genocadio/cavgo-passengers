@@ -19,7 +19,8 @@ export function useCompanies() {
   return useQuery({
     queryKey: ["companies"],
     queryFn: async (): Promise<Company[]> => {
-      const response = await fetch("https://api.gocavgo.com/api/main/companies");
+      const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "http://localhost:8080/api";
+      const response = await fetch(`${BACKEND_BASE_URL}/main/companies`);
       if (!response.ok) {
         throw new Error("Failed to fetch companies");
       }
