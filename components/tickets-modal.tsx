@@ -32,6 +32,8 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
   const [pdfQRCodes, setPdfQRCodes] = React.useState<string[][]>([])
   // Add state to track expanded bookings
   const [expandedBooking, setExpandedBooking] = React.useState<string | null>(null)
+  // Add state to track expanded guest tickets
+  const [expandedGuestTicket, setExpandedGuestTicket] = React.useState<string | null>(null)
 
   // Generate QR codes for each booking's tickets (for logged-in users)
   React.useEffect(() => {
@@ -296,11 +298,44 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                             {payBooking.status === 'pending' ? t("processing") : t("payNow")}
                           </Button>
                         ) : !user ? (
-                          <Button size="sm" onClick={() => handleViewTicket(ticket)}>
-                            {t("viewTicket")}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setExpandedGuestTicket(expandedGuestTicket === ticket.id ? null : ticket.id)}
+                          >
+                            {expandedGuestTicket === ticket.id ? t("hideTickets") : t("viewTickets")}
                           </Button>
                         ) : null}
                       </div>
+                      {/* Show ticket details inline for guest users when expanded */}
+                      {!user && expandedGuestTicket === ticket.id && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{t("ticketNumber")}</span>
+                              <span className="font-mono font-medium">{ticket.ticketNumber || ticket.bookingReference}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{t("passenger")}</span>
+                              <span className="font-medium">{ticket.passengerName || "-"}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{t("departure")}</span>
+                              <span className="font-medium">{ticket.fromStop}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{t("arrival")}</span>
+                              <span className="font-medium">{ticket.toStop}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">{t("paymentStatus")}</span>
+                              <Badge variant={ticket.paymentStatus === "paid" ? "default" : "secondary"}>
+                                {t(ticket.paymentStatus)}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
