@@ -313,7 +313,7 @@ export default function TicketsModal({ isOpen, onClose }: TicketsModalProps) {
                           <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                               <span className="text-muted-foreground">{t("ticketNumber")}</span>
-                              <span className="font-mono font-medium">{ticket.ticketNumber || ticket.bookingReference}</span>
+                              <span className="font-mono font-medium">{ticket.bookingReference}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span className="text-muted-foreground">{t("passenger")}</span>
